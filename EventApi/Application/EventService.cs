@@ -6,7 +6,7 @@ namespace EventApi.Application
     public class EventService: IEventService
     {
         private readonly ILogger<EventService> _logger;
-        private readonly List<Event> _events = new List<Event>();
+        private readonly static List<Event> _events = new List<Event>();
 
         public EventService(ILogger<EventService> logger)
         {
@@ -42,6 +42,8 @@ namespace EventApi.Application
             evnt.Description = newevnt.Description;
             evnt.StartAt = newevnt.StartAt;
             evnt.EndAt = newevnt.EndAt;
+
+            _logger.LogInformation($"Обновлено событие с Id = {evnt.Id}.");
             return evnt;
         }
         
@@ -55,6 +57,7 @@ namespace EventApi.Application
                 return;
             }
 
+            _logger.LogInformation($"Удалено событие с Id = {evnt.Id}.");
             _events.Remove(evnt);
         }
     }
