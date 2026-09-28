@@ -1,4 +1,5 @@
 
+using Swashbuckle.AspNetCore;
 using EventApi.Application;
 
 namespace EventApi;
@@ -16,6 +17,8 @@ public class Program
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddOpenApi();
 
+        builder.Services.AddSwaggerGen();
+
         // Регистрируем EventService
         builder.Services.AddScoped<IEventService, EventService>();
 
@@ -25,6 +28,8 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
 
         app.UseHttpsRedirection();
