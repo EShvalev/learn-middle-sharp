@@ -5,6 +5,10 @@
 Реализовать базовый REST API с CRUD операциями на основе шаблона webapi (ASP.NET Core Web API)
 
 ## Как был создан
+- Среда разработки: VS 2026 Community Edition
+- Целевая платформа .NET 10.0
+- ОС: Windows 10
+
 Запустить из корневой папки команду
 
 	dotnet new webapi --use-program-main -n EventApi
@@ -41,5 +45,5 @@
 	  "title": "string" [required],
 	  "description": "string",
 	  "startAt": "2026-09-28T16:42:50.411Z" [required],
-	  "endAt": "2026-09-28T18:42:50.411Z" [required][must be: endAt > startAt]
+	  "endAt": "2026-09-28T18:42:50.412Z" [required][must be: endAt > startAt]
 	}
