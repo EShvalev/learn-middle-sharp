@@ -33,11 +33,11 @@
 
 | HTTP метод | Путь | Параметры | Назначение |
 | --- | :--- | :--- | :--- |
-| GET | /events | | Возвращает список событий |
-| GET | /events/\{id\} | [FromRoute] id: Id события | Возвращает событие по Id |
-| POST | /events |  [FromBody] eventDto: структура события | Добавляет новое событие |
-| PUT | /events/\{id\} |  [FromRoute] id: Id события, [FromBody] eventDto: структура события | Обновляет событие данными из eventDto |
-| DELETE | /events/\{id\} | [FromRoute] id: Id события | Удаляет событие по Id |
+| GET | /api/events | | Возвращает список событий |
+| GET | /api/events/\{id\} | [FromRoute] id: Id события | Возвращает событие по Id |
+| POST | /api/events |  [FromBody] eventDto: структура события | Добавляет новое событие |
+| PUT | /api/events/\{id\} |  [FromRoute] id: Id события, [FromBody] eventDto: структура события | Обновляет событие данными из eventDto |
+| DELETE | /api/events/\{id\} | [FromRoute] id: Id события | Удаляет событие по Id |
 
 Структура события:
 

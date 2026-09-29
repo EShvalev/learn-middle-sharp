@@ -1,0 +1,116 @@
+[
+  {
+    "DocumentId": {
+      "ProjectId": {
+        "Id": "2372028b-46b9-414c-a830-a1388294d05a"
+      },
+      "Id": "5505d8d5-c56e-46e9-aaed-4be76ec580aa"
+    },
+    "FileName": "EventService.cs",
+    "FilePath": "D:\\Learning\\YandexPracticum\\CSharp\\Practice\\EventApi\\Application\\EventService.cs",
+    "FileChanges": [
+      {
+        "LineNumber": 16,
+        "CharNumber": 1,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0430\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432. \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u0435 \u0441\u0438\u043C\u0432\u043E\u043B\u044B 18 \u043D\u0430 \u0022\\r\\n\\s\\s\\s\\s\\s\\s\\s\\s\u0022."
+      },
+      {
+        "LineNumber": 18,
+        "CharNumber": 1,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0430\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432. \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u0435 \u0441\u0438\u043C\u0432\u043E\u043B\u044B 18 \u043D\u0430 \u0022\\r\\n\\s\\s\\s\\s\\s\\s\\s\\s\u0022."
+      },
+      {
+        "LineNumber": 48,
+        "CharNumber": 1,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0430\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432. \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u0435 \u0441\u0438\u043C\u0432\u043E\u043B\u044B 18 \u043D\u0430 \u0022\\r\\n\\s\\s\\s\\s\\s\\s\\s\\s\u0022."
+      }
+    ]
+  },
+  {
+    "DocumentId": {
+      "ProjectId": {
+        "Id": "2372028b-46b9-414c-a830-a1388294d05a"
+      },
+      "Id": "0bb3f164-1b2b-4b20-baa4-467e6b254a28"
+    },
+    "FileName": "EventDto.cs",
+    "FilePath": "D:\\Learning\\YandexPracticum\\CSharp\\Practice\\EventApi\\Models\\EventDto.cs",
+    "FileChanges": [
+      {
+        "LineNumber": 20,
+        "CharNumber": 1,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0430\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432. \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u0435 \u0441\u0438\u043C\u0432\u043E\u043B\u044B 26 \u043D\u0430 \u0022\\r\\n\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\u0022."
+      },
+      {
+        "LineNumber": 21,
+        "CharNumber": 56,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0430\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432. \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u0435 \u0441\u0438\u043C\u0432\u043E\u043B\u044B 14 \u043D\u0430 \u0022\\r\\n\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\u0022."
+      }
+    ]
+  },
+  {
+    "DocumentId": {
+      "ProjectId": {
+        "Id": "2372028b-46b9-414c-a830-a1388294d05a"
+      },
+      "Id": "2cf5de38-b1eb-4fb0-913f-d2869eb52e7e"
+    },
+    "FileName": "EventsController.cs",
+    "FilePath": "D:\\Learning\\YandexPracticum\\CSharp\\Practice\\EventApi\\Presentation\\EventsController.cs",
+    "FileChanges": [
+      {
+        "LineNumber": 23,
+        "CharNumber": 10,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0430\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432. \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u0435 \u0441\u0438\u043C\u0432\u043E\u043B\u044B 15 \u043D\u0430 \u0022\\r\\n\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\u0022."
+      },
+      {
+        "LineNumber": 45,
+        "CharNumber": 1,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0430\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432. \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u0435 \u0441\u0438\u043C\u0432\u043E\u043B\u044B 26 \u043D\u0430 \u0022\\r\\n\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\u0022."
+      },
+      {
+        "LineNumber": 54,
+        "CharNumber": 14,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0430\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432. \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u0435 \u0441\u0438\u043C\u0432\u043E\u043B\u044B 19 \u043D\u0430 \u0022\\r\\n\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\u0022."
+      },
+      {
+        "LineNumber": 62,
+        "CharNumber": 1,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0430\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432. \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u0435 \u0441\u0438\u043C\u0432\u043E\u043B\u044B 26 \u043D\u0430 \u0022\\r\\n\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\u0022."
+      },
+      {
+        "LineNumber": 64,
+        "CharNumber": 1,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0430\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432. \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u0435 \u0441\u0438\u043C\u0432\u043E\u043B\u044B 26 \u043D\u0430 \u0022\\r\\n\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\u0022."
+      }
+    ]
+  },
+  {
+    "DocumentId": {
+      "ProjectId": {
+        "Id": "2372028b-46b9-414c-a830-a1388294d05a"
+      },
+      "Id": "85381b62-56e6-4a9a-968a-2ec60ea27784"
+    },
+    "FileName": "Program.cs",
+    "FilePath": "D:\\Learning\\YandexPracticum\\CSharp\\Practice\\EventApi\\Program.cs",
+    "FileChanges": [
+      {
+        "LineNumber": 44,
+        "CharNumber": 1,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0430\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432. \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u0435 \u0441\u0438\u043C\u0432\u043E\u043B\u044B 18 \u043D\u0430 \u0022\\r\\n\\s\\s\\s\\s\\s\\s\\s\\s\u0022."
+      }
+    ]
+  }
+]

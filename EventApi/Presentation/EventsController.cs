@@ -20,7 +20,7 @@ namespace EventApi.Presentation
 
         [HttpGet()]
         public IActionResult GetAll()
-        { 
+        {
             return Ok(_eventService.GetAll());
         }
 
@@ -34,43 +34,24 @@ namespace EventApi.Presentation
         [HttpPost()]
         public IActionResult Create([FromBody] EventDto eventdto)
         {
-            if (eventdto.EndAt <= eventdto.StartAt)
+            var evnt = new Event
             {
-                ModelState.AddModelError("Дата окончания", "Дата окончания должна быть позже даты начала события.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var evnt = new Event { 
                 Title = eventdto.Title,
                 Description = eventdto.Description,
                 StartAt = eventdto.StartAt,
                 EndAt = eventdto.EndAt
-                };
+            };
             var id = _eventService.Create(evnt);
             
-            return CreatedAtAction(nameof(Create), new { id = evnt.Id }, evnt);
+            return CreatedAtAction(nameof(GetById), new { id = evnt.Id }, evnt);
         }
 
         [HttpPut("{id}")]
         public IActionResult Update(int id, EventDto eventdto)
         {
-            if (eventdto.EndAt <= eventdto.StartAt)
-            {
-                ModelState.AddModelError("Дата окончания", "Дата окончания должна быть позже даты начала события.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var evnt = _eventService.GetById(id);
             if (evnt == null)
-            { 
+            {
                 return NotFound();
             }
 

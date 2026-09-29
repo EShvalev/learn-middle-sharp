@@ -1,6 +1,6 @@
-@EventApi_HostAddress = http://localhost:5012
+@EventApi_HostAddress = http://localhost:5001
 
-GET {{EventApi_HostAddress}}/weatherforecast/
+GET {{EventApi_HostAddress}}/api/events
 Accept: application/json
 
 ###

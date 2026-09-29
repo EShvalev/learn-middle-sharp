@@ -2,7 +2,7 @@
 
 namespace EventApi.Application
 {
-    public class EventService: IEventService
+    public class EventService : IEventService
     {
         private readonly ILogger<EventService> _logger;
         private readonly static List<Event> _events = new List<Event>();
@@ -23,17 +23,17 @@ namespace EventApi.Application
             evnt.Id = maxid;
             _events.Add(evnt);
 
-            _logger.LogInformation($"Создано событие с Id = {evnt.Id}.");
+            _logger.LogInformation("Создано событие с Id = {0}.", evnt.Id);
             return evnt.Id;
         }
 
         public Event? Update(int id, Event newevnt)
-        { 
+        {
             var evnt = GetById(id);
 
             if (evnt == null)
             {
-                _logger.LogInformation($"Не найдено событие с Id = {id}.");
+                _logger.LogInformation("Не найдено событие с Id = {0}.", id);
                 return null;
             }
 
@@ -42,7 +42,7 @@ namespace EventApi.Application
             evnt.StartAt = newevnt.StartAt;
             evnt.EndAt = newevnt.EndAt;
 
-            _logger.LogInformation($"Обновлено событие с Id = {evnt.Id}.");
+            _logger.LogInformation("Обновлено событие с Id = {0}.", evnt.Id);
             return evnt;
         }
         
@@ -52,11 +52,11 @@ namespace EventApi.Application
 
             if (evnt == null)
             {
-                _logger.LogInformation($"Не найдено событие с Id = {id}.");
+                _logger.LogInformation("Не найдено событие с Id = {0}.", id);
                 return;
             }
 
-            _logger.LogInformation($"Удалено событие с Id = {evnt.Id}.");
+            _logger.LogInformation("Удалено событие с Id = {0}.", evnt.Id);
             _events.Remove(evnt);
         }
     }
