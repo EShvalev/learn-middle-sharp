@@ -13,9 +13,9 @@ namespace EventApi.Application
         }
 
         public List<Event> GetAll() => _events;
-        
+
         public Event? GetById(int id) => _events.FirstOrDefault(e => e.Id == id);
-        
+
         public int Create(Event evnt)
         {
             var maxid = _events.Any() ? _events.Max(e => e.Id) + 1 : 1;
@@ -45,7 +45,7 @@ namespace EventApi.Application
             _logger.LogInformation("Обновлено событие с Id = {0}.", evnt.Id);
             return evnt;
         }
-        
+
         public void Delete(int id)
         {
             var evnt = GetById(id);

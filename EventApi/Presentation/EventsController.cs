@@ -42,7 +42,7 @@ namespace EventApi.Presentation
                 EndAt = eventdto.EndAt
             };
             var id = _eventService.Create(evnt);
-            
+
             return CreatedAtAction(nameof(GetById), new { id = evnt.Id }, evnt);
         }
 
@@ -59,9 +59,9 @@ namespace EventApi.Presentation
             evnt.Description = eventdto.Description;
             evnt.StartAt = eventdto.StartAt;
             evnt.EndAt = eventdto.EndAt;
-            
+
             _eventService.Update(id, evnt);
-            
+
             return NoContent();
         }
 

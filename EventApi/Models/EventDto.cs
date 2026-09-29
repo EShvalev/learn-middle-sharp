@@ -17,7 +17,7 @@ namespace EventApi.Models
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             List<ValidationResult> errors = new List<ValidationResult>();
-            
+
             // Проверку EndAt > StartAt реализуем здесь
             if (!(EndAt > StartAt))
             {

@@ -41,11 +41,8 @@ public class Program
                     return new BadRequestObjectResult(customResponse);
                 };
             });
-        
-        builder.Services.AddAuthorization();
 
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
+        builder.Services.AddAuthorization();
 
         builder.Services.AddSwaggerGen();
 
@@ -57,7 +54,6 @@ public class Program
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
             app.UseSwagger();
             app.UseSwaggerUI();
         }
