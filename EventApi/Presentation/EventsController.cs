@@ -1,8 +1,6 @@
 ﻿using EventApi.Application;
 using EventApi.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Diagnostics;
 
 namespace EventApi.Presentation
 {

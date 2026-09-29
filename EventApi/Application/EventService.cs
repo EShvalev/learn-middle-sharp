@@ -1,5 +1,4 @@
 ﻿using EventApi.Models;
-using System.ComponentModel;
 
 namespace EventApi.Application
 {
@@ -30,7 +29,7 @@ namespace EventApi.Application
 
         public Event? Update(int id, Event newevnt)
         { 
-            var evnt = _events.FirstOrDefault(e => e.Id == id);
+            var evnt = GetById(id);
 
             if (evnt == null)
             {
@@ -49,7 +48,7 @@ namespace EventApi.Application
         
         public void Delete(int id)
         {
-            var evnt = _events.FirstOrDefault(e => e.Id == id);
+            var evnt = GetById(id);
 
             if (evnt == null)
             {

@@ -1,5 +1,4 @@
 ﻿using EventApi.Models;
-using System.Runtime.InteropServices;
 
 namespace EventApi.Application
 {
