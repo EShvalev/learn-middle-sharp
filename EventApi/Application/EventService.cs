@@ -14,7 +14,16 @@ namespace EventApi.Application
 
         public List<Event> GetAll() => _events;
 
-        public Event? GetById(int id) => _events.FirstOrDefault(e => e.Id == id);
+        public Event? GetById(int id)
+        {
+            Event? evnt = _events.FirstOrDefault(e => e.Id == id);
+
+            // Добавим для проверки исключение если событие не найдено
+            if (evnt == null)
+                throw new EventNotFoundException(string.Format("Событие {0} не найдено.", id));
+
+            return evnt;
+        }
 
         public int Create(Event evnt)
         {

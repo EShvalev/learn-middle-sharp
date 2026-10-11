@@ -1,5 +1,6 @@
 
 using EventApi.Application;
+using EventApi.Presentation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventApi;
@@ -50,6 +51,9 @@ public class Program
         builder.Services.AddScoped<IEventService, EventService>();
 
         var app = builder.Build();
+
+        // Регистрируем глобальный обработчик ошибок
+        app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
