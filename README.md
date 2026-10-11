@@ -39,7 +39,7 @@
 
 | HTTP метод | Путь | Параметры | Назначение |
 | --- | :--- | :--- | :--- |
-| GET | /api/events | | Возвращает список событий |
+| GET | /api/events | [FromQuery] title: фильтр по названию, [FromQuery] from: по дате начала (>=), [FromQuery] to: по дате окончания (<=) | Возвращает список событий с фильтрацией (все параметры опциональные) |
 | GET | /api/events/\{id\} | [FromRoute] id: Id события | Возвращает событие по Id |
 | POST | /api/events |  [FromBody] eventDto: структура события | Добавляет новое событие |
 | PUT | /api/events/\{id\} |  [FromRoute] id: Id события, [FromBody] eventDto: структура события | Обновляет событие данными из eventDto |

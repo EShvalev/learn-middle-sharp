@@ -19,9 +19,9 @@ namespace EventApi.Presentation
         }
 
         [HttpGet()]
-        public IActionResult GetAll()
+        public IActionResult GetEvents([FromQuery] string? title, [FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
-            return Ok(_eventService.GetAll());
+            return Ok(_eventService.GetEvents(title, from, to));
         }
 
         [HttpGet("{id}")]

@@ -12,7 +12,21 @@ namespace EventApi.Application
             _logger = logger;
         }
 
-        public List<Event> GetAll() => _events;
+        public List<Event> GetEvents(string? title, DateTime? from, DateTime? to)
+        {
+            var filtered = _events as IEnumerable<Event>;
+
+            if (title != null)
+                filtered = filtered.Where(e => e.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+
+            if (from.HasValue)
+                filtered = filtered.Where(e => e.StartAt.HasValue && e.StartAt.Value >= from.Value);
+
+            if (to.HasValue)
+                filtered = filtered.Where(e => e.EndAt.HasValue && e.EndAt.Value <= to.Value);
+
+            return filtered.ToList<Event>();
+        }            
 
         public Event? GetById(int id)
         {
