@@ -4,7 +4,7 @@ namespace EventApi.Application
 {
     public interface IEventService
     {
-        public List<Event> GetEvents(string? title, DateTime? from, DateTime? to);
+        public PaginatedResult<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize);
         public Event? GetById(int id);
         public int Create(Event evnt);
         public Event? Update(int id, Event newevnt);

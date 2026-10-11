@@ -19,9 +19,9 @@ namespace EventApi.Presentation
         }
 
         [HttpGet()]
-        public IActionResult GetEvents([FromQuery] string? title, [FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        public IActionResult GetEvents([FromQuery] string? title, [FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            return Ok(_eventService.GetEvents(title, from, to));
+            return Ok(_eventService.GetEvents(title, from, to, page, pageSize));
         }
 
         [HttpGet("{id}")]

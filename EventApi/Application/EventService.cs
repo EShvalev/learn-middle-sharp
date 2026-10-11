@@ -1,4 +1,5 @@
 ﻿using EventApi.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace EventApi.Application
 {
@@ -12,9 +13,13 @@ namespace EventApi.Application
             _logger = logger;
         }
 
-        public List<Event> GetEvents(string? title, DateTime? from, DateTime? to)
+        public PaginatedResult<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize)
         {
             var filtered = _events as IEnumerable<Event>;
+
+            // Выбрасываем исключение, если pageSize <= 0
+            if (pageSize <= 0)
+                throw new ValidationException("Значение pageSize должно быть больше 0.");
 
             if (title != null)
                 filtered = filtered.Where(e => e.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
@@ -25,7 +30,14 @@ namespace EventApi.Application
             if (to.HasValue)
                 filtered = filtered.Where(e => e.EndAt.HasValue && e.EndAt.Value <= to.Value);
 
-            return filtered.ToList<Event>();
+            filtered = filtered
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize);
+
+            int totalCount = filtered.Count();
+            int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            return new PaginatedResult<Event>(filtered, page, totalPages, totalCount);
         }            
 
         public Event? GetById(int id)
