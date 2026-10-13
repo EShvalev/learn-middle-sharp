@@ -1,5 +1,6 @@
 ﻿using EventApi.Models;
 using System.ComponentModel.DataAnnotations;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EventApi.Application
 {
@@ -13,13 +14,15 @@ namespace EventApi.Application
             _logger = logger;
         }
 
+        public List<Event> GetAll() => _events;
+
         public PaginatedResult<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize)
         {
             var filtered = _events as IEnumerable<Event>;
 
             // Выбрасываем исключение, если pageSize <= 0
             if (pageSize <= 0)
-                throw new ValidationException("Значение pageSize должно быть больше 0.");
+                throw new ValidationException(string.Format("Значение {0} должно быть больше 0.", nameof(pageSize)));
 
             if (title != null)
                 filtered = filtered.Where(e => e.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
@@ -30,15 +33,16 @@ namespace EventApi.Application
             if (to.HasValue)
                 filtered = filtered.Where(e => e.EndAt.HasValue && e.EndAt.Value <= to.Value);
 
-            filtered = filtered
+            var items = filtered
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize);
 
-            int totalCount = filtered.Count();
-            int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+            int totalItems = filtered.Count();
+            int onPageItems = items.Count();
+            //int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-            return new PaginatedResult<Event>(filtered, page, totalPages, totalCount);
-        }            
+            return new PaginatedResult<Event>(items, page, onPageItems, totalItems);
+        }
 
         public Event? GetById(int id)
         {
@@ -53,6 +57,12 @@ namespace EventApi.Application
 
         public int Create(Event evnt)
         {
+            // Эта валидация с выбросом исключения добавлена только для задания тестирования 2 спринта.
+            if (!(evnt.EndAt > evnt.StartAt))
+            {
+                throw new ValidationException("Дата окончания должна быть позже даты начала события.");
+            }
+
             var maxid = _events.Any() ? _events.Max(e => e.Id) + 1 : 1;
 
             evnt.Id = maxid;
@@ -64,6 +74,12 @@ namespace EventApi.Application
 
         public Event? Update(int id, Event newevnt)
         {
+            // Эта валидация с выбросом исключения добавлена только для задания тестирования 2 спринта.
+            if (!(newevnt.EndAt > newevnt.StartAt))
+            {
+                throw new ValidationException("Дата окончания должна быть позже даты начала события.");
+            }
+
             var evnt = GetById(id);
 
             if (evnt == null)

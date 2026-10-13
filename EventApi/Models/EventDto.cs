@@ -21,7 +21,10 @@ namespace EventApi.Models
             // Проверку EndAt > StartAt реализуем здесь
             if (!(EndAt > StartAt))
             {
-                errors.Add(new ValidationResult("Дата окончания должна быть позже даты начала события.", new string[] { "Дата окончания" }));
+                //errors.Add(new ValidationResult("Дата окончания должна быть позже даты начала события.", new string[] { "Дата окончания" }));
+
+                // Для задания 2 спринта выбрасываем исключение
+                throw new ValidationException("Дата окончания должна быть позже даты начала события.");
             }
 
             return errors;
