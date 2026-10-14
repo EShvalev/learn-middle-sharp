@@ -1,6 +1,5 @@
 ﻿using EventApi.Application;
 using EventApi.Models;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.ComponentModel.DataAnnotations;
@@ -328,7 +327,7 @@ namespace EventApi.Tests
             var result = _eventService.GetEvents(null, null, null, lastPage, pageSize);
 
             // Assert
-            Assert.Equal(expectedCount, result.OnPageItems);
+            Assert.Equal(expectedCount, result.CurrentPageSize);
         }
     }
 }

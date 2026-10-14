@@ -1,6 +1,5 @@
 ﻿using EventApi.Models;
 using System.ComponentModel.DataAnnotations;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EventApi.Application
 {
@@ -14,8 +13,6 @@ namespace EventApi.Application
             _logger = logger;
         }
 
-        public List<Event> GetAll() => _events;
-
         public PaginatedResult<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize)
         {
             var filtered = _events as IEnumerable<Event>;
@@ -24,7 +21,8 @@ namespace EventApi.Application
             if (pageSize <= 0)
                 throw new ValidationException(string.Format("Значение {0} должно быть больше 0.", nameof(pageSize)));
 
-            if (title != null)
+            // По замечанию из ревью 2 спринта, не применяем этот фильтр также если строка пустая
+            if (!string.IsNullOrEmpty(title))
                 filtered = filtered.Where(e => e.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
 
             if (from.HasValue)
@@ -38,10 +36,10 @@ namespace EventApi.Application
                 .Take(pageSize);
 
             int totalItems = filtered.Count();
-            int onPageItems = items.Count();
+            int curPageSize = items.Count();
             //int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-            return new PaginatedResult<Event>(items, page, onPageItems, totalItems);
+            return new PaginatedResult<Event>(items, page, curPageSize, totalItems);
         }
 
         public Event? GetById(int id)
@@ -82,11 +80,11 @@ namespace EventApi.Application
 
             var evnt = GetById(id);
 
-            if (evnt == null)
-            {
-                _logger.LogInformation("Не найдено событие с Id = {0}.", id);
-                return null;
-            }
+            //if (evnt == null)
+            //{
+            //    _logger.LogInformation("Не найдено событие с Id = {0}.", id);
+            //    return null;
+            //}
 
             evnt.Title = newevnt.Title;
             evnt.Description = newevnt.Description;
@@ -101,11 +99,11 @@ namespace EventApi.Application
         {
             var evnt = GetById(id);
 
-            if (evnt == null)
-            {
-                _logger.LogInformation("Не найдено событие с Id = {0}.", id);
-                return;
-            }
+            //if (evnt == null)
+            //{
+            //    _logger.LogInformation("Не найдено событие с Id = {0}.", id);
+            //    return;
+            //}
 
             _logger.LogInformation("Удалено событие с Id = {0}.", evnt.Id);
             _events.Remove(evnt);

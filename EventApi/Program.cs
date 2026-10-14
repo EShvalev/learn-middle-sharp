@@ -26,18 +26,18 @@ public class Program
                             kv => kv.Key,
                             kv => string.Join(";", kv.Value!.Errors.Select(e => e.ErrorMessage)));
 
-                    var customResponse = new
-                    {
-                        Message = "Ошибки валидации",
-                        Errors = errors
-                    };
-
                     var logger = context.HttpContext.RequestServices
                         .GetRequiredService<ILogger<Program>>();
 
                     var errorsString = string.Join(Environment.NewLine, errors.Select(kv => $"{kv.Key}: {kv.Value}"));
 
                     logger.LogError($"Ошибка валидации: {errorsString}");
+
+                    var customResponse = new ProblemDetails
+                    {
+                        Status = StatusCodes.Status400BadRequest,
+                        Detail = errorsString
+                    };
 
                     return new BadRequestObjectResult(customResponse);
                 };

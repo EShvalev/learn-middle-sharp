@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Diagnostics;
-using Microsoft.OpenApi;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace EventApi.Models
 {
@@ -21,10 +19,7 @@ namespace EventApi.Models
             // Проверку EndAt > StartAt реализуем здесь
             if (!(EndAt > StartAt))
             {
-                //errors.Add(new ValidationResult("Дата окончания должна быть позже даты начала события.", new string[] { "Дата окончания" }));
-
-                // Для задания 2 спринта выбрасываем исключение
-                throw new ValidationException("Дата окончания должна быть позже даты начала события.");
+                errors.Add(new ValidationResult("Дата окончания должна быть позже даты начала события.", new string[] { "Дата окончания" }));
             }
 
             return errors;
