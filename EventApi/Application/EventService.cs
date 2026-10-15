@@ -42,7 +42,7 @@ namespace EventApi.Application
             return new PaginatedResult<Event>(items, page, curPageSize, totalItems);
         }
 
-        public Event? GetById(int id)
+        public Event GetById(int id)
         {
             Event? evnt = _events.FirstOrDefault(e => e.Id == id);
 
@@ -70,7 +70,7 @@ namespace EventApi.Application
             return evnt.Id;
         }
 
-        public Event? Update(int id, Event newevnt)
+        public Event Update(int id, Event newevnt)
         {
             // Эта валидация с выбросом исключения добавлена только для задания тестирования 2 спринта.
             if (!(newevnt.EndAt > newevnt.StartAt))
@@ -79,12 +79,6 @@ namespace EventApi.Application
             }
 
             var evnt = GetById(id);
-
-            //if (evnt == null)
-            //{
-            //    _logger.LogInformation("Не найдено событие с Id = {0}.", id);
-            //    return null;
-            //}
 
             evnt.Title = newevnt.Title;
             evnt.Description = newevnt.Description;
@@ -99,14 +93,8 @@ namespace EventApi.Application
         {
             var evnt = GetById(id);
 
-            //if (evnt == null)
-            //{
-            //    _logger.LogInformation("Не найдено событие с Id = {0}.", id);
-            //    return;
-            //}
-
-            _logger.LogInformation("Удалено событие с Id = {0}.", evnt.Id);
             _events.Remove(evnt);
+            _logger.LogInformation("Удалено событие с Id = {0}.", evnt.Id);
         }
     }
 }

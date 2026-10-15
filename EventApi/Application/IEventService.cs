@@ -5,9 +5,9 @@ namespace EventApi.Application
     public interface IEventService
     {
         public PaginatedResult<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize);
-        public Event? GetById(int id);
+        public Event GetById(int id);
         public int Create(Event evnt);
-        public Event? Update(int id, Event newevnt);
+        public Event Update(int id, Event newevnt);
         public void Delete(int id);
     }
 }
