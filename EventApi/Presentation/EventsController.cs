@@ -25,7 +25,7 @@ namespace EventApi.Presentation
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+        public IActionResult GetById(Guid id)
         {
             var evnt = _eventService.GetById(id);
             return evnt != null ? Ok(evnt) : NotFound();
@@ -47,7 +47,7 @@ namespace EventApi.Presentation
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(int id, EventDto eventdto)
+        public IActionResult Update(Guid id, EventDto eventdto)
         {
             var evnt = _eventService.GetById(id);
             if (evnt == null)
@@ -66,7 +66,7 @@ namespace EventApi.Presentation
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public IActionResult Delete(Guid id)
         {
             var evnt = _eventService.GetById(id);
             if (evnt == null)

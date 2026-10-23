@@ -42,7 +42,7 @@ namespace EventApi.Application
             return new PaginatedResult<Event>(items, page, curPageSize, totalItems);
         }
 
-        public Event GetById(int id)
+        public Event GetById(Guid id)
         {
             Event? evnt = _events.FirstOrDefault(e => e.Id == id);
 
@@ -53,7 +53,7 @@ namespace EventApi.Application
             return evnt;
         }
 
-        public int Create(Event evnt)
+        public Guid Create(Event evnt)
         {
             // Эта валидация с выбросом исключения добавлена только для задания тестирования 2 спринта.
             if (!(evnt.EndAt > evnt.StartAt))
@@ -61,16 +61,16 @@ namespace EventApi.Application
                 throw new ValidationException("Дата окончания должна быть позже даты начала события.");
             }
 
-            var maxid = _events.Any() ? _events.Max(e => e.Id) + 1 : 1;
+            //var maxid = _events.Any() ? _events.Max(e => e.Id) + 1 : 1;
 
-            evnt.Id = maxid;
+            evnt.Id = Guid.NewGuid();
             _events.Add(evnt);
 
             _logger.LogInformation("Создано событие с Id = {0}.", evnt.Id);
             return evnt.Id;
         }
 
-        public Event Update(int id, Event newevnt)
+        public Event Update(Guid id, Event newevnt)
         {
             // Эта валидация с выбросом исключения добавлена только для задания тестирования 2 спринта.
             if (!(newevnt.EndAt > newevnt.StartAt))
@@ -89,7 +89,7 @@ namespace EventApi.Application
             return evnt;
         }
 
-        public void Delete(int id)
+        public void Delete(Guid id)
         {
             var evnt = GetById(id);
 
