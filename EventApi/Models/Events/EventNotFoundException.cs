@@ -1,4 +1,4 @@
-﻿namespace EventApi.Models
+﻿namespace EventApi.Models.Events
 {
     public class EventNotFoundException : Exception
     {

@@ -1,6 +1,6 @@
-﻿using EventApi.Models;
+﻿using EventApi.Models.Events;
 
-namespace EventApi.Application
+namespace EventApi.Application.Events
 {
     public interface IEventService
     {

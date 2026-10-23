@@ -1,5 +1,5 @@
-
-using EventApi.Application;
+using EventApi.Application.Events;
+using EventApi.Application.Bookings;
 using EventApi.Presentation;
 using Microsoft.AspNetCore.Mvc;
 
@@ -47,8 +47,10 @@ public class Program
 
         builder.Services.AddSwaggerGen();
 
-        // Регистрируем EventService
+        // Регистрируем свои сервисы
+        builder.Services.AddSingleton<IBookingStore, InMemoryBookingStore>();
         builder.Services.AddScoped<IEventService, EventService>();
+        builder.Services.AddScoped<IBookingService, BookingService>();
 
         var app = builder.Build();
 

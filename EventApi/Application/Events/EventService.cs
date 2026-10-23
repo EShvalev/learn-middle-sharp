@@ -1,7 +1,7 @@
-﻿using EventApi.Models;
+﻿using EventApi.Models.Events;
 using System.ComponentModel.DataAnnotations;
 
-namespace EventApi.Application
+namespace EventApi.Application.Events
 {
     public class EventService : IEventService
     {
@@ -63,7 +63,6 @@ namespace EventApi.Application
 
             //var maxid = _events.Any() ? _events.Max(e => e.Id) + 1 : 1;
 
-            evnt.Id = Guid.NewGuid();
             _events.Add(evnt);
 
             _logger.LogInformation("Создано событие с Id = {0}.", evnt.Id);

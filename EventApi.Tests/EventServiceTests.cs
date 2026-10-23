@@ -1,5 +1,5 @@
-﻿using EventApi.Application;
-using EventApi.Models;
+﻿using EventApi.Application.Events;
+using EventApi.Models.Events;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.ComponentModel.DataAnnotations;
@@ -70,7 +70,7 @@ namespace EventApi.Tests
         public void CreateEvent_OneEvent_ReturnsId()
         {
             // Arrange
-            var evnt = new Event() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
+            var evnt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
 
             // Act
             var id = _eventService.Create(evnt);
@@ -84,7 +84,7 @@ namespace EventApi.Tests
         public void CreateEvent_IfDateInvalid_ThrowsValidationExeption()
         {
             // Arrange
-            var evnt = new Event() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
+            var evnt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
 
             // Act & Assert
             Assert.Throws<ValidationException>(() => _eventService.Create(evnt));
@@ -134,7 +134,7 @@ namespace EventApi.Tests
         public void UpdateEvent_IfExists_ReturnsUpdated()
         {
             // Arrange
-            var expected = new Event() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
+            var expected = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
             var id = GetFirstExistingEventId();
 
             // Act
@@ -153,7 +153,7 @@ namespace EventApi.Tests
         public void UpdateEvent_IfNotExists_ThrowsEventNotFoundExeption()
         {
             // Arrange
-            var envt = new Event() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
+            var envt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
             var id = _zeroGuid;
 
             // Act & Assert
@@ -165,7 +165,7 @@ namespace EventApi.Tests
         public void UpdateEvent_IfDateInvalid_ThrowsValidationExeption()
         {
             // Arrange
-            var evnt = new Event() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
+            var evnt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
             var id = _zeroGuid;
 
             // Act & Assert

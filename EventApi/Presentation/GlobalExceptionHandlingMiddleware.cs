@@ -1,4 +1,5 @@
-﻿using EventApi.Models;
+﻿using EventApi.Models.Bookings;
+using EventApi.Models.Events;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -61,6 +62,8 @@ namespace EventApi.Presentation
             => ex switch
             {
                 ValidationException ve => StatusCodes.Status400BadRequest,
+                BookingStatusException bse => StatusCodes.Status400BadRequest,
+                BookingNotFoundException nfe => StatusCodes.Status404NotFound,
                 EventNotFoundException nfe => StatusCodes.Status404NotFound,
                 _ => StatusCodes.Status500InternalServerError
             };

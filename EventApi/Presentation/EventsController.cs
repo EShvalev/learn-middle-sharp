@@ -1,5 +1,5 @@
-﻿using EventApi.Application;
-using EventApi.Models;
+﻿using EventApi.Application.Events;
+using EventApi.Models.Events;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventApi.Presentation
@@ -34,13 +34,12 @@ namespace EventApi.Presentation
         [HttpPost()]
         public IActionResult Create([FromBody] EventDto eventdto)
         {
-            var evnt = new Event
-            {
-                Title = eventdto.Title,
-                Description = eventdto.Description,
-                StartAt = eventdto.StartAt,
-                EndAt = eventdto.EndAt
-            };
+            var evnt = Event.CreateNew(
+                title: eventdto.Title,
+                description: eventdto.Description,
+                startAt: eventdto.StartAt,
+                endAt: eventdto.EndAt
+            );
             var id = _eventService.Create(evnt);
 
             return CreatedAtAction(nameof(GetById), new { id = evnt.Id }, evnt);
