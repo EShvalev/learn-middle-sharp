@@ -1,15 +1,14 @@
 ﻿using EventApi.Models.Bookings;
-using EventApi.Models.Events;
 
 namespace EventApi.Application.Bookings
 {
     public class BookingService : IBookingService
     {
-        private readonly InMemoryBookingStore _bookingStore;
+        private readonly IBookingStore _bookingStore;
         private readonly ILogger<BookingService> _logger;
 
         public BookingService(
-            InMemoryBookingStore bookingStore,
+            IBookingStore bookingStore,
             ILogger<BookingService> logger
             )
         { 
@@ -23,7 +22,7 @@ namespace EventApi.Application.Bookings
 
             _bookingStore.Add(booking);
             
-            // Имитирум задержку
+            // Имитируем задержку
             await Task.Delay(100, ct);
 
             _logger.LogInformation("Создано бронирование {0} на событие {1}.", booking.Id, booking.EventId);
@@ -35,7 +34,7 @@ namespace EventApi.Application.Bookings
             if (!_bookingStore.Get(id, out var booking))
                 throw new BookingNotFoundException(string.Format("Бронирование {0} не найдено.", id));
 
-            // Имитирум задержку
+            // Имитируем задержку
             await Task.Delay(100, ct);
 
             return booking;

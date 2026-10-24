@@ -16,5 +16,7 @@ namespace EventApi.Application.Bookings
         {
             return _dict.TryGetValue(id, out booking);
         }
+
+        public IEnumerable<Booking> GetAll() => _dict.Values;
     }
 }
