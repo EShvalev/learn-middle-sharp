@@ -1,6 +1,7 @@
-﻿using EventApi.Application.Events;
+﻿using Microsoft.AspNetCore.Mvc;
+using EventApi.Application.Events;
 using EventApi.Models.Events;
-using Microsoft.AspNetCore.Mvc;
+
 
 namespace EventApi.Presentation
 {

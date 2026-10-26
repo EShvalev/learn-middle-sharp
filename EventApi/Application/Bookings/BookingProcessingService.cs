@@ -23,7 +23,7 @@ namespace EventApi.Application.Bookings
 
             using var timer = new PeriodicTimer(_interval);
 
-            while (await timer.WaitForNextTickAsync(stoppingToken))
+            while (await timer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
             {
                 try
                 {
@@ -31,6 +31,7 @@ namespace EventApi.Application.Bookings
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {
+                    _logger.LogInformation("BookingProcessingService: сработал CancellationToken, завершение цикла обработки.");
                     break;
                 }
                 catch (Exception ex)
@@ -49,12 +50,11 @@ namespace EventApi.Application.Bookings
 
             foreach (var booking in pending)
             {
-                booking.Confirm();
-
-                _logger.LogInformation("Бронирование {0} подтверждено.", booking.Id);
-
                 // Имитируем задержку
                 await Task.Delay(2000, ct);
+
+                booking.Confirm();
+                _logger.LogInformation("Бронирование {0} подтверждено.", booking.Id);
             }
         }
     }

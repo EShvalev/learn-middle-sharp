@@ -39,5 +39,16 @@ namespace EventApi.Application.Bookings
 
             return booking;
         }
+
+        public async Task<List<Booking>> GetBookings(CancellationToken ct = default)
+        {
+            // Список всех бронирований
+            var bookings = _bookingStore.GetAll().ToList<Booking>();
+
+            // Имитируем задержку
+            await Task.Delay(100, ct);
+
+            return bookings;
+        }
     }
 }

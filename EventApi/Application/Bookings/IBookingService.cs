@@ -6,5 +6,6 @@ namespace EventApi.Application.Bookings
     {
         public Task<Booking> CreateBookingAsync(Guid eventId, CancellationToken ct);
         public Task<Booking> GetBookingByIdAsync(Guid id, CancellationToken ct);
+        public Task<List<Booking>> GetBookings(CancellationToken ct);
     }
 }
