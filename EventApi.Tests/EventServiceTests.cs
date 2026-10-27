@@ -1,7 +1,5 @@
 ﻿using EventApi.Application.Events;
 using EventApi.Models.Events;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using System.ComponentModel.DataAnnotations;
 using Xunit.Extensions.Ordering;
 
@@ -11,58 +9,19 @@ using Xunit.Extensions.Ordering;
 
 namespace EventApi.Tests
 {
+    [Collection("GlobalCollection")]
     [Order(1)]
-    public class EventServiceFixture
+    public class EventServiceTests //: IClassFixture<EventApiFixture>
     {
-        public EventService eventService { get; set; }
-        private readonly List<Event> _initStore = [
-            new Event() { Id = Guid.Parse("00000001-0000-0000-0000-000000000000"), Title = "Джем-сэшн", Description = "Константин Хазанович", StartAt = Convert.ToDateTime("2026-10-06T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-06T21:00:00+03")},
-            new Event() { Id = Guid.Parse("00000002-0000-0000-0000-000000000000"), Title = "Романтический джаз", Description = "Эльвира Трафова", StartAt = Convert.ToDateTime("2026-10-07T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-07T21:00:00+03")},
-            new Event() { Id = Guid.Parse("00000003-0000-0000-0000-000000000000"), Title = "Петербургские мотивы", Description = "Ильдар Казаханов и его бэнд", StartAt = Convert.ToDateTime("2026-10-08T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-08T21:00:00+03")},
-            new Event() { Id = Guid.Parse("00000004-0000-0000-0000-000000000000"), Title = "Джазовые портреты вокалистов", Description = "Звезды мирового джаза", StartAt = Convert.ToDateTime("2026-10-09T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-09T21:00:00+03")},
-            new Event() { Id = Guid.Parse("00000005-0000-0000-0000-000000000000"), Title = "Сказки Чижика", Description = "Цикл джазовых сказок для самых маленьких", StartAt = Convert.ToDateTime("2026-10-10T12:00:00+03"), EndAt = Convert.ToDateTime("2026-10-10T14:00:00+03")},
-            new Event() { Id = Guid.Parse("00000006-0000-0000-0000-000000000000"), Title = "Вечер памяти Станислава Говорухина", Description = "", StartAt = Convert.ToDateTime("2026-10-11T18:00:00+03"), EndAt = Convert.ToDateTime("2026-10-11T20:30:00+03")},
-            new Event() { Id = Guid.Parse("00000007-0000-0000-0000-000000000000"), Title = "Весь этот джаз", Description = "Денис Кузьмин и ансамбль", StartAt = Convert.ToDateTime("2026-10-12T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-12T21:00:00+03")},
-            new Event() { Id = Guid.Parse("00000008-0000-0000-0000-000000000000"), Title = "Джем-сэшн", Description = "Константин Хазанович", StartAt = Convert.ToDateTime("2026-10-20T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-20T21:00:00+03")},
-            new Event() { Id = Guid.Parse("00000009-0000-0000-0000-000000000000"), Title = "Лэтин джаз", Description = "Концерт программы", StartAt = Convert.ToDateTime("2026-10-22T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-22T21:00:00+03")},
-            new Event() { Id = Guid.Parse("0000000a-0000-0000-0000-000000000000"), Title = "Традиционный джаз и свинг", Description = "", StartAt = Convert.ToDateTime("2026-10-24T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-24T21:00:00+03")},
-            new Event() { Id = Guid.Parse("0000000b-0000-0000-0000-000000000000"), Title = "Губная гармоника в джазе", Description = "", StartAt = Convert.ToDateTime("2026-10-27T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-27T21:00:00+03")},
-            new Event() { Id = Guid.Parse("0000000c-0000-0000-0000-000000000000"), Title = "Трибьют Фрэнку Синатре", Description = "", StartAt = Convert.ToDateTime("2026-10-30T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-30T21:00:00+03")}
-            ];
-
-        public EventServiceFixture()
-        {
-            ILogger<EventService> logger = NullLogger<EventService>.Instance;
-
-            eventService = new EventService(logger);
-
-            // Предзаполним список события в сервисе для тестирования выборок и пагинаций
-            InitEvents(eventService);
-        }
-
-        private void InitEvents(EventService eventService)
-        {
-            foreach (var evnt in _initStore)
-                eventService.Create(evnt);
-        }
-    }
-
-    public class EventServiceTests : IClassFixture<EventServiceFixture>
-    {
-        private readonly EventService _eventService;
+        private readonly IEventService _eventService;
         private Guid _zeroGuid = Guid.Parse("00000000-0000-0000-0000-000000000000");
+        private Guid _testGuid = Guid.Parse("00000005-0000-0000-0000-000000000000");
+        private Guid _testGuidToDelete = Guid.Parse("00000001-0000-0000-0000-000000000000");
         private readonly int _VeryLongPageSize = 1000000;
 
-        public EventServiceTests(EventServiceFixture fixture)
+        public EventServiceTests(EventApiFixture fixture)
         {
             _eventService = fixture.eventService;
-        }
-
-        // Вспомогательный метод: возвращает Id первого события в списке (используется в успешных сценариях поиска/изменения/удаления по Id).
-        private Guid GetFirstExistingEventId()
-        {
-            var result = _eventService.GetEvents(null, null, null, 1, _VeryLongPageSize);
-            return result.TotalItems > 0 ? result.Items.FirstOrDefault(new Event { Id = _zeroGuid }).Id : _zeroGuid;
         }
 
         [Fact]
@@ -109,7 +68,7 @@ namespace EventApi.Tests
         public void GetEventById_IfExists_ReturnsNotNull()
         {
             // Arrange
-            var id = GetFirstExistingEventId();
+            var id = _testGuid;
 
             // Act
             var result = _eventService.GetById(id);
@@ -135,7 +94,7 @@ namespace EventApi.Tests
         {
             // Arrange
             var expected = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
-            var id = GetFirstExistingEventId();
+            var id = _testGuid;
 
             // Act
             var result = _eventService.Update(id, expected);
@@ -177,7 +136,7 @@ namespace EventApi.Tests
         public void DeleteEvent_IfExists_DoesNotContainEventWithDeletedId()
         {
             // Arrange
-            var id = GetFirstExistingEventId();
+            var id = _testGuidToDelete;
             var pageSize = _VeryLongPageSize; // заведомо большой размер страницы, чтобы пагинация не применялась
 
             // Act
@@ -294,7 +253,7 @@ namespace EventApi.Tests
 
         [Theory(DisplayName = "Тестирование граничных условий для параметров фильтрации и пагинации.")]
         [MemberData(nameof(GetPaginationTestData))]
-        [Order(1)] // Для тестов пагинации и фильтрациии задаем самый ранний порядок выполнения (до манипуляций со списком событий)
+        [Order(0)] // Для тестов пагинации и фильтрациии задаем самый ранний порядок выполнения (до манипуляций со списком событий)
         public void GetEvents_BoundaryComplexCheck_ReturnsInline(string? title, DateTime? from, DateTime? to, int page, int pageSize, int expectedCount)
         {
             // Arrange
@@ -319,7 +278,7 @@ namespace EventApi.Tests
         [InlineData(4, 3, 3)]
         [InlineData(6, 2, 2)]
         [InlineData(12, 1, 1)]
-        [Order(1)] // Для тестов пагинации и фильтрациии задаем самый ранний порядок выполнения (до манипуляций со списком событий)
+        [Order(0)] // Для тестов пагинации и фильтрациии задаем самый ранний порядок выполнения (до манипуляций со списком событий)
         public void GetEvents_WhenUsePagination_ReturnsCorrectLastPageEventsCount(int lastPage, int pageSize, int expectedCount)
         {
             // Arrange
