@@ -28,7 +28,7 @@ namespace EventApi.Application.Bookings
             var booking = Booking.CreatePending(eventId);
 
             _bookingStore.Add(booking);
-            
+
             // Имитируем задержку
             await Task.Delay(100, ct);
 

@@ -25,7 +25,7 @@
         {
             if (Status != BookingStatus.Pending)
                 throw new BookingStatusException(string.Format("Данный переход между статусами бронирования запрещен: текущий {0}, новый {1}.", nameof(Status), nameof(BookingStatus.Confirmed)));
-            
+
             Status = BookingStatus.Confirmed;
             ProcessedAt = DateTime.Now;
         }

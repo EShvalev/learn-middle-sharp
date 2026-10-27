@@ -12,7 +12,7 @@ namespace EventApi.Application.Bookings
             IBookingStore store,
             ILogger<BookingProcessingService> logger
             )
-        { 
+        {
             _store = store;
             _logger = logger;
         }

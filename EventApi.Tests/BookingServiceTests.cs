@@ -50,8 +50,8 @@ namespace EventApi.Tests
             HashSet<Guid> ids = new HashSet<Guid>();
 
             // Act
-            for (int i = 0; i < count; i++) 
-            { 
+            for (int i = 0; i < count; i++)
+            {
                 var booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
                 ids.Add(booking.Id);
             }
@@ -154,10 +154,10 @@ namespace EventApi.Tests
             var eventId = _testGuidToDelete;
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<EventNotFoundException>(async () => 
+            var exception = await Assert.ThrowsAsync<EventNotFoundException>(async () =>
             {
                 _eventService.Delete(eventId);
-                await _bookingService.CreateBookingAsync(eventId, CancellationToken.None); 
+                await _bookingService.CreateBookingAsync(eventId, CancellationToken.None);
             });
 
             // Assert
