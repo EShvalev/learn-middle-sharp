@@ -35,11 +35,11 @@ public class Program
 
                     var customResponse = new ProblemDetails
                     {
-                        Status = StatusCodes.Status400BadRequest,
+                        Status = StatusCodes.Status422UnprocessableEntity,
                         Detail = errorsString
                     };
 
-                    return new BadRequestObjectResult(customResponse);
+                    return new UnprocessableEntityObjectResult(customResponse);
                 };
             });
 

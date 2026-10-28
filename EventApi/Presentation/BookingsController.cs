@@ -34,6 +34,8 @@ namespace EventApi.Presentation
 
         // GET api/<BookingsController>/{id}
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(Booking), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetByIdAsync(Guid id, CancellationToken ct)
         {
             var booking = await _bookingService.GetBookingByIdAsync(id, ct);
@@ -43,6 +45,8 @@ namespace EventApi.Presentation
         // POST api/events/{id}/book
         // Здесь id события, а не бронирования.
         [HttpPost("~/api/Events/{id}/book")]
+        [ProducesResponseType(typeof(BookingCreateResponse), StatusCodes.Status202Accepted)]
+        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CreateAsync([FromRoute] Guid id, CancellationToken ct)
         {
             var booking = await _bookingService.CreateBookingAsync(id, ct);

@@ -6,7 +6,8 @@ namespace EventApi.Application.Bookings
     {
         private readonly IBookingStore _store;
         private readonly ILogger<BookingProcessingService> _logger;
-        private TimeSpan _interval = TimeSpan.FromSeconds(5);
+        private readonly TimeSpan _timerPeriod = TimeSpan.FromSeconds(5);
+        const int _taskDelay = 2000;
 
         public BookingProcessingService(
             IBookingStore store,
@@ -21,41 +22,55 @@ namespace EventApi.Application.Bookings
         {
             _logger.LogInformation("BookingProcessingService запущен.");
 
-            using var timer = new PeriodicTimer(_interval);
+            using var timer = new PeriodicTimer(_timerPeriod);
 
-            while (await timer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
+            try
             {
-                try
+                do
                 {
-                    await ProcessBookings(stoppingToken);
-                }
-                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-                {
-                    _logger.LogInformation("BookingProcessingService: сработал CancellationToken, завершение цикла обработки.");
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "При обработке новых бронирований произошла ошибка.");
-                }
+                    try
+                    {
+                        await ProcessBookings(stoppingToken);
+                    }
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "При обработке новых бронирований произошла ошибка.");
+                    }
+                } 
+                while (await timer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested);
             }
-
-            _logger.LogInformation("BookingProcessingService остановлен.");
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("BookingProcessingService: сработал CancellationToken, завершение цикла обработки.");
+            }
+            finally
+            {
+                _logger.LogInformation("BookingProcessingService остановлен.");
+            }
         }
 
         private async Task ProcessBookings(CancellationToken ct)
         {
             var pending = _store.GetAll()
                 .Where(b => b.Status == BookingStatus.Pending).ToList<Booking>();
+            var tasks = new List<Task>();
 
             foreach (var booking in pending)
             {
-                // Имитируем задержку
-                await Task.Delay(2000, ct);
+                tasks.Add(Task.Run(async () => {
+                    // Имитируем задержку
+                    await Task.Delay(_taskDelay, ct);
 
-                booking.Confirm();
-                _logger.LogInformation("Бронирование {0} подтверждено.", booking.Id);
+                    booking.Confirm();
+                    _logger.LogInformation("Бронирование {0} подтверждено.", booking.Id);
+                }));
             }
+
+            await Task.WhenAll(tasks);
         }
     }
 }

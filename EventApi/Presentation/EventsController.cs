@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using EventApi.Application.Events;
+﻿using EventApi.Application.Events;
+using EventApi.Models.Bookings;
 using EventApi.Models.Events;
+using Microsoft.AspNetCore.Mvc;
 
 
 namespace EventApi.Presentation
@@ -26,6 +27,8 @@ namespace EventApi.Presentation
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status404NotFound)]
         public IActionResult GetById(Guid id)
         {
             var evnt = _eventService.GetById(id);
@@ -33,6 +36,8 @@ namespace EventApi.Presentation
         }
 
         [HttpPost()]
+        [ProducesResponseType(typeof(EventCreateResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status422UnprocessableEntity)]
         public IActionResult Create([FromBody] EventDto eventdto)
         {
             var evnt = Event.CreateNew(
@@ -43,10 +48,13 @@ namespace EventApi.Presentation
             );
             var id = _eventService.Create(evnt);
 
-            return CreatedAtAction(nameof(GetById), new { id = evnt.Id }, evnt);
+            return CreatedAtAction(nameof(GetById), new EventCreateResponse { Id = evnt.Id }, evnt);
         }
 
         [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status422UnprocessableEntity)]
         public IActionResult Update(Guid id, EventDto eventdto)
         {
             var evnt = _eventService.GetById(id);
@@ -66,6 +74,8 @@ namespace EventApi.Presentation
         }
 
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status404NotFound)]
         public IActionResult Delete(Guid id)
         {
             var evnt = _eventService.GetById(id);

@@ -30,7 +30,7 @@ namespace EventApi.Application.Bookings
             _bookingStore.Add(booking);
 
             // Имитируем задержку
-            await Task.Delay(100, ct);
+            //await Task.Delay(100, ct);
 
             _logger.LogInformation("Создано бронирование {0} на событие {1}.", booking.Id, booking.EventId);
             return booking;
@@ -42,7 +42,7 @@ namespace EventApi.Application.Bookings
                 throw new BookingNotFoundException(string.Format("Бронирование {0} не найдено.", id));
 
             // Имитируем задержку
-            await Task.Delay(100, ct);
+            //await Task.Delay(100, ct);
 
             return booking;
         }
@@ -53,7 +53,7 @@ namespace EventApi.Application.Bookings
             var bookings = _bookingStore.GetAll().ToList<Booking>();
 
             // Имитируем задержку
-            await Task.Delay(100, ct);
+            //await Task.Delay(100, ct);
 
             return bookings;
         }

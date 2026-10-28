@@ -49,7 +49,7 @@ namespace EventApi.Presentation
             httpContext.Response.StatusCode = statusCode;
             httpContext.Response.ContentType = "application/json";
 
-            var error = new ProblemDetails
+            var error = new ProblemDetailsDto
             {
                 Status = statusCode,
                 Detail = ex.Message
@@ -61,10 +61,10 @@ namespace EventApi.Presentation
         private static int MapStatusCode(Exception ex)
             => ex switch
             {
-                ValidationException ve => StatusCodes.Status400BadRequest,
                 BookingStatusException bse => StatusCodes.Status400BadRequest,
                 BookingNotFoundException nfe => StatusCodes.Status404NotFound,
                 EventNotFoundException nfe => StatusCodes.Status404NotFound,
+                ValidationException ve => StatusCodes.Status422UnprocessableEntity,
                 _ => StatusCodes.Status500InternalServerError
             };
     }
