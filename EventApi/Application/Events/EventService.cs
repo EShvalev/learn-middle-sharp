@@ -7,7 +7,6 @@ namespace EventApi.Application.Events
     {
         private readonly ILogger<EventService> _logger;
         private readonly IEventStore _eventStore;
-        //private readonly static List<Event> _events = new List<Event>();
 
         public EventService(
             IEventStore eventStore,

@@ -40,7 +40,7 @@ namespace EventApi.Application.Bookings
                     {
                         _logger.LogError(ex, "При обработке новых бронирований произошла ошибка.");
                     }
-                } 
+                }
                 while (await timer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested);
             }
             catch (OperationCanceledException)
@@ -61,7 +61,8 @@ namespace EventApi.Application.Bookings
 
             foreach (var booking in pending)
             {
-                tasks.Add(Task.Run(async () => {
+                tasks.Add(Task.Run(async () =>
+                {
                     // Имитируем задержку
                     await Task.Delay(_taskDelay, ct);
 

@@ -11,7 +11,7 @@ namespace EventApi.Application.Events
         {
             _dict[evnt.Id] = evnt;
         }
-        
+
         public bool Get(Guid id, out Event evnt)
         {
             return _dict.TryGetValue(id, out evnt);
@@ -21,7 +21,7 @@ namespace EventApi.Application.Events
         {
             return _dict.TryRemove(id, out var _);
         }
-        
+
         public bool Update(Guid id, Event evnt)
         {
             return Get(id, out var orig_evnt) ? _dict.TryUpdate(id, evnt, orig_evnt) : false;
