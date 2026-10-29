@@ -9,9 +9,9 @@ using Xunit.Extensions.Ordering;
 
 namespace EventApi.Tests
 {
-    [Collection("GlobalCollection")]
+    //[Collection("GlobalCollection")]
     [Order(1)]
-    public class EventServiceTests //: IClassFixture<EventApiFixture>
+    public class EventServiceTests : IClassFixture<EventApiFixture>
     {
         private readonly IEventService _eventService;
         private Guid _zeroGuid = Guid.Parse("00000000-0000-0000-0000-000000000000");

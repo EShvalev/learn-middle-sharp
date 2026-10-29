@@ -2,15 +2,12 @@
 using EventApi.Application.Events;
 using EventApi.Models.Bookings;
 using EventApi.Models.Events;
-using Microsoft.Extensions.Logging;
-using System.Reflection;
 using Xunit.Extensions.Ordering;
 
 namespace EventApi.Tests
 {
-    [Collection("GlobalCollection")]
-    [Order(0)]
-    public class BookingServiceTests //: IClassFixture<EventApiFixture>
+    //[Collection("GlobalCollection")]
+    public class BookingServiceTests : IClassFixture<EventApiFixture>
     {
         private readonly IBookingStore _bookingStore;
         private readonly IBookingService _bookingService;
@@ -27,7 +24,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public async Task CreateBooking_ExistingEvent_ReturnsId()
         {
             // Arrange
@@ -41,7 +37,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public async Task CreateSeveralBookings_ExistingEvent_ReturnsUniqueIds()
         {
             // Arrange
@@ -62,7 +57,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public async Task GetBookingById_AfterCreating_ReturnsCorrectInfo()
         {
             // Arrange
@@ -81,7 +75,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public async Task GetBookingById_AfterConfirming_ReturnsCorrectStatus()
         {
             // Arrange
@@ -100,7 +93,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public async Task GetBookingById_AfterRejecting_ReturnsCorrectStatus()
         {
             // Arrange
@@ -119,7 +111,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public async Task GetBookingById_NotExistingId_ThrowsBookingNotFoundExeption()
         {
             // Arrange
@@ -133,7 +124,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public async Task CreateBooking_NotExistingEvent_ThrowsEventNotFoundExeption()
         {
             // Arrange
@@ -147,7 +137,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public async Task CreateBooking_AfterDeletingEvent_ThrowsEventNotFoundExeption()
         {
             // Arrange
@@ -165,7 +154,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public async Task BookingStore_AddBooking_GetBooking()
         {
             // Arrange
@@ -181,7 +169,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public async Task Booking_CreateNew_GetStatus()
         {
             // Arrange
@@ -196,7 +183,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public async Task Booking_Confirm_GetStatus()
         {
             // Arrange

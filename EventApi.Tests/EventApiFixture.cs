@@ -5,13 +5,14 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EventApi.Tests
 {
-    [CollectionDefinition("GlobalCollection")]
-    public class GlobalCollection : ICollectionFixture<EventApiFixture> { }
+    //[CollectionDefinition("GlobalCollection")]
+    //public class GlobalCollection : ICollectionFixture<EventApiFixture> { }
 
     public class EventApiFixture
     {
         public IBookingStore bookingStore { get; set; }
         public IBookingService bookingService { get; set; }
+        public IEventStore eventStore { get; set; }
         public IEventService eventService { get; set; }
         private readonly List<Event> _initStore = [
             new Event() { Id = Guid.Parse("00000001-0000-0000-0000-000000000000"), Title = "Джем-сэшн", Description = "Константин Хазанович", StartAt = Convert.ToDateTime("2026-10-06T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-06T21:00:00+03")},
@@ -30,7 +31,9 @@ namespace EventApi.Tests
 
         public EventApiFixture()
         {
-            eventService = new EventService(NullLogger<EventService>.Instance);
+            eventStore = new EventStore();
+
+            eventService = new EventService(eventStore, NullLogger<EventService>.Instance);
 
             bookingStore = new InMemoryBookingStore();
 
@@ -44,17 +47,8 @@ namespace EventApi.Tests
 
         private void InitEvents(IEventService eventService)
         {
-            // Проверка, что хранилище событий еще пустое, чтобы его первичное заполнение срабатывало один раз.
-            int pageSize = 1000000;
-            var result = eventService.GetEvents(null, null, null, 1, pageSize);
-
-            if (result.TotalItems == 0)
-            {
-                foreach (var evnt in _initStore)
-                    eventService.Create(evnt);
-
-                Console.WriteLine("EventApiFixture.InitEvents: events from _initStore are copied.");
-            }
+            foreach (var evnt in _initStore)
+                eventService.Create(evnt);
 
             Console.WriteLine("EventApiFixture.InitEvents() called.");
         }

@@ -48,6 +48,7 @@ public class Program
         builder.Services.AddSwaggerGen();
 
         // Регистрируем свои сервисы
+        builder.Services.AddSingleton<IEventStore, EventStore>();
         builder.Services.AddSingleton<IBookingStore, InMemoryBookingStore>();
         builder.Services.AddScoped<IEventService, EventService>();
         builder.Services.AddScoped<IBookingService, BookingService>();

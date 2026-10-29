@@ -6,16 +6,21 @@ namespace EventApi.Application.Events
     public class EventService : IEventService
     {
         private readonly ILogger<EventService> _logger;
-        private readonly static List<Event> _events = new List<Event>();
+        private readonly IEventStore _eventStore;
+        //private readonly static List<Event> _events = new List<Event>();
 
-        public EventService(ILogger<EventService> logger)
+        public EventService(
+            IEventStore eventStore,
+            ILogger<EventService> logger
+            )
         {
+            _eventStore = eventStore;
             _logger = logger;
         }
 
         public PaginatedResult<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize)
         {
-            var filtered = _events as IEnumerable<Event>;
+            var filtered = _eventStore.GetAll() as IEnumerable<Event>;
 
             // Выбрасываем исключение, если pageSize <= 0
             if (pageSize <= 0)
@@ -44,7 +49,7 @@ namespace EventApi.Application.Events
 
         public Event GetById(Guid id)
         {
-            Event? evnt = _events.FirstOrDefault(e => e.Id == id);
+            Event? evnt = _eventStore.GetAll().FirstOrDefault(e => e.Id == id);
 
             // Добавим для проверки исключение если событие не найдено
             if (evnt == null)
@@ -63,7 +68,7 @@ namespace EventApi.Application.Events
 
             //var maxid = _events.Any() ? _events.Max(e => e.Id) + 1 : 1;
 
-            _events.Add(evnt);
+            _eventStore.Add(evnt);
 
             _logger.LogInformation("Создано событие с Id = {0}.", evnt.Id);
             return evnt.Id;
@@ -92,7 +97,7 @@ namespace EventApi.Application.Events
         {
             var evnt = GetById(id);
 
-            _events.Remove(evnt);
+            _eventStore.Remove(id);
             _logger.LogInformation("Удалено событие с Id = {0}.", evnt.Id);
         }
     }
