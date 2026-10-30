@@ -16,7 +16,7 @@
                 Id = Guid.NewGuid(),
                 EventId = eventId,
                 Status = BookingStatus.Pending,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
             return booking;
         }
@@ -27,7 +27,7 @@
                 throw new BookingStatusException(string.Format("Данный переход между статусами бронирования запрещен: текущий {0}, новый {1}.", nameof(Status), nameof(BookingStatus.Confirmed)));
 
             Status = BookingStatus.Confirmed;
-            ProcessedAt = DateTime.Now;
+            ProcessedAt = DateTime.UtcNow;
         }
 
         public void Reject()
@@ -36,7 +36,7 @@
                 throw new BookingStatusException(string.Format("Данный переход между статусами бронирования запрещен: текущий {0}, новый {1}.", nameof(Status), nameof(BookingStatus.Rejected)));
 
             Status = BookingStatus.Rejected;
-            ProcessedAt = DateTime.Now;
+            ProcessedAt = DateTime.UtcNow;
         }
     }
 }

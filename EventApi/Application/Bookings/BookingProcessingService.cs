@@ -56,22 +56,20 @@ namespace EventApi.Application.Bookings
         private async Task ProcessBookings(CancellationToken ct)
         {
             var pending = _store.GetAll()
-                .Where(b => b.Status == BookingStatus.Pending).ToList<Booking>();
-            var tasks = new List<Task>();
-
-            foreach (var booking in pending)
-            {
-                tasks.Add(Task.Run(async () =>
-                {
-                    // Имитируем задержку
-                    await Task.Delay(_taskDelay, ct);
-
-                    booking.Confirm();
-                    _logger.LogInformation("Бронирование {0} подтверждено.", booking.Id);
-                }));
-            }
+                .Where(booking => booking.Status == BookingStatus.Pending).ToList<Booking>();
+            var tasks = pending
+                .Select(booking => ProcessBookingAsync(booking, ct)).ToList();
 
             await Task.WhenAll(tasks);
+        }
+
+        private async Task ProcessBookingAsync(Booking booking, CancellationToken ct)
+        {
+            // Имитируем задержку
+            await Task.Delay(_taskDelay, ct);
+
+            booking.Confirm();
+            _logger.LogInformation("Бронирование {0} подтверждено.", booking.Id);
         }
     }
 }

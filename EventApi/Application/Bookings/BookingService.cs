@@ -29,9 +29,6 @@ namespace EventApi.Application.Bookings
 
             _bookingStore.Add(booking);
 
-            // Имитируем задержку
-            //await Task.Delay(100, ct);
-
             _logger.LogInformation("Создано бронирование {0} на событие {1}.", booking.Id, booking.EventId);
             return booking;
         }
@@ -41,19 +38,13 @@ namespace EventApi.Application.Bookings
             if (!_bookingStore.Get(id, out var booking))
                 throw new BookingNotFoundException(string.Format("Бронирование {0} не найдено.", id));
 
-            // Имитируем задержку
-            //await Task.Delay(100, ct);
-
             return booking;
         }
 
-        public async Task<List<Booking>> GetBookings(CancellationToken ct = default)
+        public async Task<List<Booking>> GetBookingsAsync(CancellationToken ct = default)
         {
             // Список всех бронирований
             var bookings = _bookingStore.GetAll().ToList<Booking>();
-
-            // Имитируем задержку
-            //await Task.Delay(100, ct);
 
             return bookings;
         }

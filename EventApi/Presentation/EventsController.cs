@@ -23,39 +23,41 @@ namespace EventApi.Presentation
         [HttpGet()]
         public IActionResult GetEvents([FromQuery] string? title, [FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            return Ok(_eventService.GetEvents(title, from, to, page, pageSize));
+            var result = _eventService.GetEvents(title, from, to, page, pageSize)
+                .Items.Select(evnt => new EventDto(evnt));
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult GetById(Guid id)
         {
             var evnt = _eventService.GetById(id);
-            return evnt != null ? Ok(evnt) : NotFound();
+            return Ok(new EventDto(evnt));
         }
 
         [HttpPost()]
         [ProducesResponseType(typeof(EventCreateResponse), StatusCodes.Status201Created)]
-        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status422UnprocessableEntity)]
-        public IActionResult Create([FromBody] EventDto eventdto)
+        [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+        public IActionResult Create([FromBody] EventCreateUpdateRequest eventReq)
         {
             var evnt = Event.CreateNew(
-                title: eventdto.Title,
-                description: eventdto.Description,
-                startAt: eventdto.StartAt,
-                endAt: eventdto.EndAt
+                title: eventReq.Title,
+                description: eventReq.Description,
+                startAt: eventReq.StartAt,
+                endAt: eventReq.EndAt
             );
             var id = _eventService.Create(evnt);
 
-            return CreatedAtAction(nameof(GetById), new EventCreateResponse { Id = evnt.Id }, evnt);
+            return CreatedAtAction(nameof(GetById), new { id = evnt.Id }, new EventCreateResponse { Id = evnt.Id });
         }
 
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status422UnprocessableEntity)]
-        public IActionResult Update(Guid id, EventDto eventdto)
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+        public IActionResult Update(Guid id, EventCreateUpdateRequest eventReq)
         {
             var evnt = _eventService.GetById(id);
             if (evnt == null)
@@ -63,10 +65,10 @@ namespace EventApi.Presentation
                 return NotFound();
             }
 
-            evnt.Title = eventdto.Title;
-            evnt.Description = eventdto.Description;
-            evnt.StartAt = eventdto.StartAt;
-            evnt.EndAt = eventdto.EndAt;
+            evnt.Title = eventReq.Title;
+            evnt.Description = eventReq.Description;
+            evnt.StartAt = eventReq.StartAt;
+            evnt.EndAt = eventReq.EndAt;
 
             _eventService.Update(id, evnt);
 
@@ -75,7 +77,7 @@ namespace EventApi.Presentation
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(typeof(ProblemDetailsDto), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult Delete(Guid id)
         {
             var evnt = _eventService.GetById(id);

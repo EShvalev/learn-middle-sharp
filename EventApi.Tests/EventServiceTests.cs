@@ -246,7 +246,7 @@ namespace EventApi.Tests
             data.Add("джаз", null, null, 2, 5, 1);
             data.Add("джаз", Convert.ToDateTime("2026-10-12T19:00:00+03"), null, 1, 100, 4);
             data.Add("джаз", null, Convert.ToDateTime("2026-10-12T19:00:00+03"), 1, 100, 2);
-            data.Add(null, null, null, 0, 1, 1);
+            data.Add(null, null, null, 1, 1, 1);
 
             return data;
         }

@@ -25,6 +25,10 @@ namespace EventApi.Application.Events
             if (pageSize <= 0)
                 throw new ValidationException(string.Format("Значение {0} должно быть больше 0.", nameof(pageSize)));
 
+            // Выбрасываем исключение, если page < 1
+            if (page < 1)
+                throw new ValidationException(string.Format("Значение {0} должно быть больше 0.", nameof(page)));
+
             // По замечанию из ревью 2 спринта, не применяем этот фильтр также если строка пустая
             if (!string.IsNullOrEmpty(title))
                 filtered = filtered.Where(e => e.Title.Contains(title, StringComparison.OrdinalIgnoreCase));

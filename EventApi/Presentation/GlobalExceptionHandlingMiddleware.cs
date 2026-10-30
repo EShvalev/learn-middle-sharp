@@ -49,7 +49,7 @@ namespace EventApi.Presentation
             httpContext.Response.StatusCode = statusCode;
             httpContext.Response.ContentType = "application/json";
 
-            var error = new ProblemDetailsDto
+            var error = new ProblemDetails
             {
                 Status = statusCode,
                 Detail = ex.Message

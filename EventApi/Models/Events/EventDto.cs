@@ -2,27 +2,23 @@
 
 namespace EventApi.Models.Events
 {
-    public class EventDto : IValidatableObject
+    public class EventDto
     {
-        [Required(ErrorMessage = "Заголовок события обязателен.")]
+        public Guid Id { get; set; }
         public string Title { get; set; }
         public string? Description { get; set; }
-        [Required(ErrorMessage = "Дата начала события обязательна.")]
         public DateTime? StartAt { get; set; }
-        [Required(ErrorMessage = "Дата окончания события обязательна.")]
         public DateTime? EndAt { get; set; }
+        
+        public EventDto() { Title = string.Empty; }
 
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        public EventDto(Event evnt)
         {
-            List<ValidationResult> errors = new List<ValidationResult>();
-
-            // Проверку EndAt > StartAt реализуем здесь
-            if (!(EndAt > StartAt))
-            {
-                errors.Add(new ValidationResult("Дата окончания должна быть позже даты начала события.", new string[] { "Дата окончания" }));
-            }
-
-            return errors;
+            Id = evnt.Id;
+            Title = evnt.Title;
+            Description = evnt.Description;
+            StartAt = evnt.StartAt;
+            EndAt = evnt.EndAt;
         }
     }
 }
