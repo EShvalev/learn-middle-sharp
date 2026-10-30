@@ -9,7 +9,7 @@ namespace EventApi.Models.Events
         public string? Description { get; set; }
         public DateTime? StartAt { get; set; }
         public DateTime? EndAt { get; set; }
-        
+
         public EventDto() { Title = string.Empty; }
 
         public EventDto(Event evnt)
