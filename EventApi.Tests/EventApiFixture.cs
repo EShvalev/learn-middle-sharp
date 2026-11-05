@@ -60,7 +60,7 @@ namespace EventApi.Tests
                 .BuildServiceProvider();
 
             var factory = serviceProvider.GetRequiredService<ILoggerFactory>();
-            
+
             loggerBPS = factory.CreateLogger<BookingProcessingService>();
             bookingProcessingService = new BookingProcessingService(bookingStore, loggerBPS);
 
