@@ -70,7 +70,7 @@ namespace EventApi.Tests
         private void InitEvents(IEventService eventService)
         {
             foreach (var evnt in _initStore)
-                eventService.Create(evnt);
+                eventService.CreateForTests(evnt);
 
             Console.WriteLine("EventApiFixture.InitEvents() called.");
         }

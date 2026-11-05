@@ -1,4 +1,6 @@
-﻿namespace EventApi.Models.Bookings
+﻿using EventApi.Models.Bookings;
+
+namespace EventApi.Presentation.Bookings
 {
     public class BookingCreateResponse
     {

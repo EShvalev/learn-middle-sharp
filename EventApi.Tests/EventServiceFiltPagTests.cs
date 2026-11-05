@@ -17,7 +17,7 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public void GetEvents_FiltredByTitle_ReturnsExpectedTitles()
+        public async Task GetEvents_FiltredByTitle_ReturnsExpectedTitles()
         {
             // Arrange
             var pageSize = _VeryLongPageSize; // заведомо большой размер страницы, чтобы пагинация не применялась
@@ -33,7 +33,7 @@ namespace EventApi.Tests
             var notExpectedTitle = "Сказки Чижика";
 
             // Act
-            var result = _eventService.GetEvents(titleFilter, null, null, 1, pageSize);
+            var result = await _eventService.GetEventsAsync(titleFilter, null, null, 1, pageSize, CancellationToken.None);
 
             // Assert
             Assert.All(expectedTitles, title => Assert.Contains(result.Items, e => e.Title == title));
@@ -41,7 +41,7 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public void GetEvents_FiltredByDates_ReturnsExpectedTitles()
+        public async Task GetEvents_FiltredByDates_ReturnsExpectedTitles()
         {
             // Arrange
             var pageSize = 1000000; // заведомо большой размер страницы, чтобы пагинация не применялась
@@ -56,7 +56,7 @@ namespace EventApi.Tests
             var notExpectedTitle = "Петербургские мотивы";
 
             // Act
-            var result = _eventService.GetEvents(null, startSince, endTill, 1, pageSize);
+            var result = await _eventService.GetEventsAsync(null, startSince, endTill, 1, pageSize, CancellationToken.None);
 
             // Assert
             Assert.All(expectedTitles, title => Assert.Contains(result.Items, e => e.Title == title));
@@ -64,7 +64,7 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public void GetEvents_FiltredByTitleAndDates_ReturnsExpectedTitles()
+        public async Task GetEvents_FiltredByTitleAndDates_ReturnsExpectedTitles()
         {
             // Arrange
             var pageSize = _VeryLongPageSize; // заведомо большой размер страницы, чтобы пагинация не применялась
@@ -79,7 +79,7 @@ namespace EventApi.Tests
             var notExpectedTitle = "Джем-сэшн";
 
             // Act
-            var result = _eventService.GetEvents(titleFilter, startSince, endTill, 1, pageSize);
+            var result = await _eventService.GetEventsAsync(titleFilter, startSince, endTill, 1, pageSize, CancellationToken.None);
 
             // Assert
             Assert.All(expectedTitles, title => Assert.Contains(result.Items, e => e.Title == title));
@@ -87,7 +87,7 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public void GetEvents_FiltredByDatesWhenIntervalIsEmpty_ReturnsNoEvents()
+        public async Task GetEvents_FiltredByDatesWhenIntervalIsEmpty_ReturnsNoEvents()
         {
             // Arrange
             var pageSize = _VeryLongPageSize; // заведомо большой размер страницы, чтобы пагинация не применялась
@@ -96,7 +96,7 @@ namespace EventApi.Tests
             var expectedCount = 0;
 
             // Act
-            var result = _eventService.GetEvents(null, startSince, endTill, 1, pageSize);
+            var result = await _eventService.GetEventsAsync(null, startSince, endTill, 1, pageSize, CancellationToken.None);
 
             // Assert
             Assert.Equal(expectedCount, result.TotalItems);
@@ -118,12 +118,12 @@ namespace EventApi.Tests
 
         [Theory(DisplayName = "Тестирование граничных условий для параметров фильтрации и пагинации.")]
         [MemberData(nameof(GetPaginationTestData))]
-        public void GetEvents_BoundaryComplexCheck_ReturnsInline(string? title, DateTime? from, DateTime? to, int page, int pageSize, int expectedCount)
+        public async Task GetEvents_BoundaryComplexCheck_ReturnsInline(string? title, DateTime? from, DateTime? to, int page, int pageSize, int expectedCount)
         {
             // Arrange
 
             // Act
-            var result = _eventService.GetEvents(title, from, to, page, pageSize);
+            var result = await _eventService.GetEventsAsync(title, from, to, page, pageSize, CancellationToken.None);
 
             // Assert
             Assert.Equal(expectedCount, result.Items.Count());
@@ -142,12 +142,12 @@ namespace EventApi.Tests
         [InlineData(4, 3, 3)]
         [InlineData(6, 2, 2)]
         [InlineData(12, 1, 1)]
-        public void GetEvents_WhenUsePagination_ReturnsCorrectLastPageEventsCount(int lastPage, int pageSize, int expectedCount)
+        public async Task GetEvents_WhenUsePagination_ReturnsCorrectLastPageEventsCount(int lastPage, int pageSize, int expectedCount)
         {
             // Arrange
 
             // Act
-            var result = _eventService.GetEvents(null, null, null, lastPage, pageSize);
+            var result = await _eventService.GetEventsAsync(null, null, null, lastPage, pageSize, CancellationToken.None);
 
             // Assert
             Assert.Equal(expectedCount, result.CurrentPageSize);

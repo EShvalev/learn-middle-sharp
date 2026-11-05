@@ -1,5 +1,7 @@
 ﻿using EventApi.Models.Events;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
 
 namespace EventApi.Application.Events
 {
@@ -17,9 +19,9 @@ namespace EventApi.Application.Events
             _logger = logger;
         }
 
-        public PaginatedResult<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize)
+        public Task<PaginatedResult<EventDto>> GetEventsAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default)
         {
-            var filtered = _eventStore.GetAll() as IEnumerable<Event>;
+            var filtered = _eventStore.GetAll().Select(e => new EventDto(e));
 
             // Выбрасываем исключение, если pageSize <= 0
             if (pageSize <= 0)
@@ -45,12 +47,12 @@ namespace EventApi.Application.Events
 
             int totalItems = filtered.Count();
             int curPageSize = items.Count();
-            //int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-            return new PaginatedResult<Event>(items, page, curPageSize, totalItems);
+            return Task.FromResult(new PaginatedResult<EventDto>(items, page, curPageSize, totalItems));
         }
 
-        public Event GetById(Guid id)
+        // Приватный метод для запроса экземпляра сущности из хранилища по id (нужен для Update)
+        private Event GetEventById(Guid id)
         {
             Event? evnt = _eventStore.GetAll().FirstOrDefault(e => e.Id == id);
 
@@ -61,47 +63,62 @@ namespace EventApi.Application.Events
             return evnt;
         }
 
-        public Guid Create(Event evnt)
+        public Task<EventDto> GetEventByIdAsync(Guid id, CancellationToken ct = default)
         {
-            // Эта валидация с выбросом исключения добавлена только для задания тестирования 2 спринта.
-            if (!(evnt.EndAt > evnt.StartAt))
-            {
-                throw new ValidationException("Дата окончания должна быть позже даты начала события.");
-            }
+            return Task.FromResult(new EventDto(GetEventById(id)));
+        }
 
-            //var maxid = _events.Any() ? _events.Max(e => e.Id) + 1 : 1;
+        public Task<EventDto> CreateEventAsync(CreateEventDto dto, CancellationToken ct = default)
+        {
+            // Эта валидация с выбросом исключения добавлена для тестов (проверка невалидных данных без использования контроллера).
+            dto.ThrowsExceptionIfInvalid();
 
+            var evnt = Event.CreateNew(
+                title: dto.Title,
+                description: dto.Description,
+                startAt: dto.StartAt,
+                endAt: dto.EndAt
+            );
+
+            _eventStore.Add(evnt);
+
+            _logger.LogInformation("Создано событие с Id = {0}.", evnt.Id);
+            return Task.FromResult(new EventDto(evnt));
+        }
+
+        // Метод нужен для тестов (первичное заполнение хранилища событий с предопределенными Id, без валидации).
+        public Guid CreateForTests(Event evnt)
+        {
             _eventStore.Add(evnt);
 
             _logger.LogInformation("Создано событие с Id = {0}.", evnt.Id);
             return evnt.Id;
         }
 
-        public Event Update(Guid id, Event newevnt)
+        public Task<EventDto> UpdateEventAsync(Guid id, CreateEventDto dto, CancellationToken ct = default)
         {
-            // Эта валидация с выбросом исключения добавлена только для задания тестирования 2 спринта.
-            if (!(newevnt.EndAt > newevnt.StartAt))
-            {
-                throw new ValidationException("Дата окончания должна быть позже даты начала события.");
-            }
+            // Эта валидация с выбросом исключения добавлена для тестов (проверка невалидных данных без использования контроллера).
+            dto.ThrowsExceptionIfInvalid();
 
-            var evnt = GetById(id);
+            var evnt = GetEventById(id);
 
-            evnt.Title = newevnt.Title;
-            evnt.Description = newevnt.Description;
-            evnt.StartAt = newevnt.StartAt;
-            evnt.EndAt = newevnt.EndAt;
+            evnt.Title = dto.Title;
+            evnt.Description = dto.Description;
+            evnt.StartAt = dto.StartAt;
+            evnt.EndAt = dto.EndAt;
 
             _logger.LogInformation("Обновлено событие с Id = {0}.", evnt.Id);
-            return evnt;
+            return Task.FromResult(new EventDto(evnt));
         }
 
-        public void Delete(Guid id)
+        public Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var evnt = GetById(id);
+            var evnt = GetEventByIdAsync(id);
 
             _eventStore.Remove(id);
+            
             _logger.LogInformation("Удалено событие с Id = {0}.", evnt.Id);
+            return Task.CompletedTask;
         }
     }
 }

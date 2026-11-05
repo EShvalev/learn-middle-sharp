@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using EventApi.Models.Events;
+using System.ComponentModel.DataAnnotations;
 
-namespace EventApi.Models.Events
+namespace EventApi.Application.Events
 {
     public class EventDto
     {

@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using EventApi.Models.Events;
 
-namespace EventApi.Models.Events
+namespace EventApi.Application.Events
 {
-    public class EventCreateUpdateRequest : IValidatableObject
+    public class CreateEventDto : IValidatableObject
     {
         [Required(ErrorMessage = "Заголовок события обязателен.")]
         public string Title { get; set; }
@@ -11,6 +12,16 @@ namespace EventApi.Models.Events
         public DateTime? StartAt { get; set; }
         [Required(ErrorMessage = "Дата окончания события обязательна.")]
         public DateTime? EndAt { get; set; }
+
+        public CreateEventDto() { Title = string.Empty; }
+
+        public CreateEventDto(Event evnt)
+        {
+            Title = evnt.Title;
+            Description = evnt.Description;
+            StartAt = evnt.StartAt;
+            EndAt = evnt.EndAt;
+        }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
@@ -23,6 +34,20 @@ namespace EventApi.Models.Events
             }
 
             return errors;
+        }
+
+        public void ThrowsExceptionIfInvalid()
+        {
+            var context = new ValidationContext(this, serviceProvider: null, items: null);
+            var results = new List<ValidationResult>();
+            bool isValid = Validator.TryValidateObject(this, context, results, validateAllProperties: true);
+
+            if (!isValid)
+            {
+                var errors = results.Select(r => r.ErrorMessage);
+                var summary = string.Join(Environment.NewLine, errors);
+                throw new ValidationException(summary);
+            }
         }
     }
 }

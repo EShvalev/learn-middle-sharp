@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using EventApi.Application.Events;
 using EventApi.Application.Bookings;
-using EventApi.Models.Bookings;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace EventApi.Presentation
+namespace EventApi.Presentation.Bookings
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -29,9 +28,7 @@ namespace EventApi.Presentation
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
             var bookings = await _bookingService.GetBookingsAsync(ct);
-            var response = bookings
-                .Select(booking => new BookingDto(booking));
-            return Ok(response);
+            return Ok(bookings);
         }
 
         // GET api/<BookingsController>/{id}
@@ -41,7 +38,7 @@ namespace EventApi.Presentation
         public async Task<IActionResult> GetByIdAsync(Guid id, CancellationToken ct)
         {
             var booking = await _bookingService.GetBookingByIdAsync(id, ct);
-            return Ok(new BookingDto(booking));
+            return Ok(booking);
         }
 
         // POST api/events/{id}/book
