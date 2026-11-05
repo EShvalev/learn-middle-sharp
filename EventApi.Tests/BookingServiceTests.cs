@@ -2,7 +2,7 @@
 using EventApi.Application.Events;
 using EventApi.Models.Bookings;
 using EventApi.Models.Events;
-using Xunit.Extensions.Ordering;
+using Microsoft.Extensions.Hosting;
 
 namespace EventApi.Tests
 {
@@ -12,6 +12,7 @@ namespace EventApi.Tests
         private readonly IBookingStore _bookingStore;
         private readonly IBookingService _bookingService;
         private readonly IEventService _eventService;
+        private readonly IHostedService _bookingProcessingService;
         private Guid _zeroGuid = Guid.Parse("00000000-0000-0000-0000-000000000000");
         private Guid _testGuid = Guid.Parse("00000002-0000-0000-0000-000000000000");
         private Guid _testGuidToDelete = Guid.Parse("00000005-0000-0000-0000-000000000000");
@@ -21,6 +22,8 @@ namespace EventApi.Tests
             _bookingStore = fixture.bookingStore;
             _bookingService = fixture.bookingService;
             _eventService = fixture.eventService;
+
+            _bookingProcessingService = fixture.bookingProcessingService;
         }
 
         [Fact]
@@ -34,6 +37,36 @@ namespace EventApi.Tests
 
             // Assert
             Assert.True(booking.Id != _zeroGuid);
+        }
+
+        [Fact]
+        public async Task CreateBooking_JustAfterCreating_ReturnsCorrectState()
+        {
+            // Arrange
+            var evnt = _eventService.GetById(_testGuid);
+
+            // Act
+            var booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
+
+            // Assert
+            Assert.Equal(BookingStatus.Pending, booking.Status);
+        }
+
+        [Fact]
+        public async Task CreateBooking_AfterProcessingByBPS_ReturnsCorrectState()
+        {
+            // Arrange
+            var evnt = _eventService.GetById(_testGuid);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            using var taskBPS = _bookingProcessingService.StartAsync(cts.Token);
+
+            // Act
+            var booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
+            await Task.Delay(7000); // ждем 7 сек = 5+2 (тик таймера + задержка обработки)
+            cts.Cancel();
+
+            // Assert
+            Assert.Equal(BookingStatus.Confirmed, booking.Status);
         }
 
         [Fact]

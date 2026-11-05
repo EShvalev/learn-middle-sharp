@@ -1,7 +1,11 @@
 ﻿using EventApi.Application.Bookings;
 using EventApi.Application.Events;
 using EventApi.Models.Events;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Text;
 
 namespace EventApi.Tests
 {
@@ -14,6 +18,9 @@ namespace EventApi.Tests
         public IBookingService bookingService { get; set; }
         public IEventStore eventStore { get; set; }
         public IEventService eventService { get; set; }
+        public IHostedService bookingProcessingService { get; set; }
+        public ILogger<BookingProcessingService> loggerBPS { get; set; }
+
         private readonly List<Event> _initStore = [
             new Event() { Id = Guid.Parse("00000001-0000-0000-0000-000000000000"), Title = "Джем-сэшн", Description = "Константин Хазанович", StartAt = Convert.ToDateTime("2026-10-06T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-06T21:00:00+03")},
             new Event() { Id = Guid.Parse("00000002-0000-0000-0000-000000000000"), Title = "Романтический джаз", Description = "Эльвира Трафова", StartAt = Convert.ToDateTime("2026-10-07T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-07T21:00:00+03")},
@@ -41,6 +48,21 @@ namespace EventApi.Tests
 
             // Предзаполним список события в сервисе для тестирования выборок и пагинаций
             InitEvents(eventService);
+
+            // Регистрируем консольный логгер для BPS
+            Console.OutputEncoding = Encoding.UTF8;
+            var serviceProvider = new ServiceCollection()
+                .AddLogging(builder =>
+                {
+                    builder.AddConsole(); // Добавляем вывод в консоль
+                    builder.SetMinimumLevel(LogLevel.Information); // Минимальный уровень
+                })
+                .BuildServiceProvider();
+
+            var factory = serviceProvider.GetRequiredService<ILoggerFactory>();
+            
+            loggerBPS = factory.CreateLogger<BookingProcessingService>();
+            bookingProcessingService = new BookingProcessingService(bookingStore, loggerBPS);
 
             Console.WriteLine("EventApiFixture() constructor called.");
         }

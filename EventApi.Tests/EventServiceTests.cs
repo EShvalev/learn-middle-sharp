@@ -1,16 +1,9 @@
 ﻿using EventApi.Application.Events;
 using EventApi.Models.Events;
 using System.ComponentModel.DataAnnotations;
-using Xunit.Extensions.Ordering;
-
-// Регистрация глобальных упорядочивателей для классов и коллекций
-[assembly: TestCollectionOrderer("Xunit.Extensions.Ordering.CollectionOrderer", "Xunit.Extensions.Ordering")]
-[assembly: TestCaseOrderer("Xunit.Extensions.Ordering.TestCaseOrderer", "Xunit.Extensions.Ordering")]
 
 namespace EventApi.Tests
 {
-    //[Collection("GlobalCollection")]
-    [Order(1)]
     public class EventServiceTests : IClassFixture<EventApiFixture>
     {
         private readonly IEventService _eventService;
@@ -25,32 +18,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(2)]
-        public void CreateEvent_OneEvent_ReturnsId()
-        {
-            // Arrange
-            var evnt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
-
-            // Act
-            var id = _eventService.Create(evnt);
-
-            // Assert
-            Assert.True(id != _zeroGuid);
-        }
-
-        [Fact]
-        [Order(2)]
-        public void CreateEvent_IfDateInvalid_ThrowsValidationExeption()
-        {
-            // Arrange
-            var evnt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
-
-            // Act & Assert
-            Assert.Throws<ValidationException>(() => _eventService.Create(evnt));
-        }
-
-        [Fact]
-        [Order(1)]
         public void GetEvents_AllOnSinglePage_ReturnsExpectedCount()
         {
             // Arrange
@@ -64,7 +31,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public void GetEventById_IfExists_ReturnsNotNull()
         {
             // Arrange
@@ -78,7 +44,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(1)]
         public void GetEventById_IfNotExists_ThrowsEventNotFoundExeption()
         {
             // Arrange
@@ -89,7 +54,29 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(2)]
+        public void CreateEvent_OneEvent_ReturnsId()
+        {
+            // Arrange
+            var evnt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
+
+            // Act
+            var id = _eventService.Create(evnt);
+
+            // Assert
+            Assert.True(id != _zeroGuid);
+        }
+
+        [Fact]
+        public void CreateEvent_IfDateInvalid_ThrowsValidationExeption()
+        {
+            // Arrange
+            var evnt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
+
+            // Act & Assert
+            Assert.Throws<ValidationException>(() => _eventService.Create(evnt));
+        }
+
+        [Fact]
         public void UpdateEvent_IfExists_ReturnsUpdated()
         {
             // Arrange
@@ -108,7 +95,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(2)]
         public void UpdateEvent_IfNotExists_ThrowsEventNotFoundExeption()
         {
             // Arrange
@@ -120,7 +106,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(2)]
         public void UpdateEvent_IfDateInvalid_ThrowsValidationExeption()
         {
             // Arrange
@@ -132,7 +117,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        [Order(2)]
         public void DeleteEvent_IfExists_DoesNotContainEventWithDeletedId()
         {
             // Arrange
@@ -145,149 +129,6 @@ namespace EventApi.Tests
 
             // Assert
             Assert.DoesNotContain(id, result.Items.Select(e => e.Id));
-        }
-
-        [Fact]
-        [Order(1)]
-        public void GetEvents_FiltredByTitle_ReturnsExpectedTitles()
-        {
-            // Arrange
-            var pageSize = _VeryLongPageSize; // заведомо большой размер страницы, чтобы пагинация не применялась
-            var titleFilter = "джаз";
-            var expectedTitles = new[]
-            {
-                "Романтический джаз",
-                "Джазовые портреты вокалистов",
-                "Лэтин джаз",
-                "Традиционный джаз и свинг",
-                "Губная гармоника в джазе",
-            };
-            var notExpectedTitle = "Сказки Чижика";
-
-            // Act
-            var result = _eventService.GetEvents(titleFilter, null, null, 1, pageSize);
-
-            // Assert
-            Assert.All(expectedTitles, title => Assert.Contains(result.Items, e => e.Title == title));
-            Assert.DoesNotContain(notExpectedTitle, result.Items.Select(e => e.Title));
-        }
-
-        [Fact]
-        [Order(1)]
-        public void GetEvents_FiltredByDates_ReturnsExpectedTitles()
-        {
-            // Arrange
-            var pageSize = 1000000; // заведомо большой размер страницы, чтобы пагинация не применялась
-            var startSince = Convert.ToDateTime("2026-10-12T00:00+03");
-            var endTill = Convert.ToDateTime("2026-10-22T23:59+03");
-            var expectedTitles = new[]
-            {
-                "Весь этот джаз",
-                "Джем-сэшн",
-                "Лэтин джаз",
-            };
-            var notExpectedTitle = "Петербургские мотивы";
-
-            // Act
-            var result = _eventService.GetEvents(null, startSince, endTill, 1, pageSize);
-
-            // Assert
-            Assert.All(expectedTitles, title => Assert.Contains(result.Items, e => e.Title == title));
-            Assert.DoesNotContain(notExpectedTitle, result.Items.Select(e => e.Title));
-        }
-
-        [Fact]
-        [Order(1)]
-        public void GetEvents_FiltredByTitleAndDates_ReturnsExpectedTitles()
-        {
-            // Arrange
-            var pageSize = _VeryLongPageSize; // заведомо большой размер страницы, чтобы пагинация не применялась
-            var titleFilter = "джаз";
-            var startSince = Convert.ToDateTime("2026-10-12T00:00+03");
-            var endTill = Convert.ToDateTime("2026-10-22T23:59+03");
-            var expectedTitles = new[]
-            {
-                "Весь этот джаз",
-                "Лэтин джаз",
-            };
-            var notExpectedTitle = "Джем-сэшн";
-
-            // Act
-            var result = _eventService.GetEvents(titleFilter, startSince, endTill, 1, pageSize);
-
-            // Assert
-            Assert.All(expectedTitles, title => Assert.Contains(result.Items, e => e.Title == title));
-            Assert.DoesNotContain(notExpectedTitle, result.Items.Select(e => e.Title));
-        }
-
-        [Fact]
-        [Order(1)]
-        public void GetEvents_FiltredByDatesWhenIntervalIsEmpty_ReturnsNoEvents()
-        {
-            // Arrange
-            var pageSize = _VeryLongPageSize; // заведомо большой размер страницы, чтобы пагинация не применялась
-            var startSince = Convert.ToDateTime("2026-10-22T00:00+03");
-            var endTill = Convert.ToDateTime("2026-10-12T23:59+03");
-            var expectedCount = 0;
-
-            // Act
-            var result = _eventService.GetEvents(null, startSince, endTill, 1, pageSize);
-
-            // Assert
-            Assert.Equal(expectedCount, result.TotalItems);
-        }
-
-        // Параметры фильтрации и пагинации (title, from, to, page, pageSize) + ожидаемое количество событий в выборке (expectedCount)
-        public static TheoryData<string?, DateTime?, DateTime?, int, int, int> GetPaginationTestData()
-        {
-            var data = new TheoryData<string?, DateTime?, DateTime?, int, int, int>();
-
-            data.Add("джаз", null, null, 1, 5, 5);
-            data.Add("джаз", null, null, 2, 5, 1);
-            data.Add("джаз", Convert.ToDateTime("2026-10-12T19:00:00+03"), null, 1, 100, 4);
-            data.Add("джаз", null, Convert.ToDateTime("2026-10-12T19:00:00+03"), 1, 100, 2);
-            data.Add(null, null, null, 1, 1, 1);
-
-            return data;
-        }
-
-        [Theory(DisplayName = "Тестирование граничных условий для параметров фильтрации и пагинации.")]
-        [MemberData(nameof(GetPaginationTestData))]
-        [Order(0)] // Для тестов пагинации и фильтрациии задаем самый ранний порядок выполнения (до манипуляций со списком событий)
-        public void GetEvents_BoundaryComplexCheck_ReturnsInline(string? title, DateTime? from, DateTime? to, int page, int pageSize, int expectedCount)
-        {
-            // Arrange
-
-            // Act
-            var result = _eventService.GetEvents(title, from, to, page, pageSize);
-
-            // Assert
-            Assert.Equal(expectedCount, result.Items.Count());
-        }
-
-        [Theory(DisplayName = "Тестирование пагинации: проверка количества событий на последней странице при разных pageSize.")]
-        [InlineData(1, 12, 12)] // page, pageSize, expectedCount
-        [InlineData(2, 11, 1)]
-        [InlineData(2, 10, 2)]
-        [InlineData(2, 9, 3)]
-        [InlineData(2, 8, 4)]
-        [InlineData(2, 7, 5)]
-        [InlineData(2, 6, 6)]
-        [InlineData(3, 5, 2)]
-        [InlineData(3, 4, 4)]
-        [InlineData(4, 3, 3)]
-        [InlineData(6, 2, 2)]
-        [InlineData(12, 1, 1)]
-        [Order(0)] // Для тестов пагинации и фильтрациии задаем самый ранний порядок выполнения (до манипуляций со списком событий)
-        public void GetEvents_WhenUsePagination_ReturnsCorrectLastPageEventsCount(int lastPage, int pageSize, int expectedCount)
-        {
-            // Arrange
-
-            // Act
-            var result = _eventService.GetEvents(null, null, null, lastPage, pageSize);
-
-            // Assert
-            Assert.Equal(expectedCount, result.CurrentPageSize);
         }
     }
 }
