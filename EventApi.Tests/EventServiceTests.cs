@@ -110,7 +110,7 @@ namespace EventApi.Tests
         {
             // Arrange
             var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
-            var id = _zeroGuid;
+            var id = _testGuid;
 
             // Act & Assert
             await Assert.ThrowsAsync<ValidationException>(() => _eventService.UpdateEventAsync(id, evnt, CancellationToken.None));

@@ -1,6 +1,4 @@
 ﻿using EventApi.Application.Events;
-using EventApi.Models.Events;
-using System.ComponentModel.DataAnnotations;
 
 namespace EventApi.Tests
 {

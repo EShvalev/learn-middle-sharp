@@ -25,7 +25,7 @@ namespace EventApi.Application.Bookings
             // Этот вызов нужен чтобы проверить существование события с данным id (если нет, выбрасывается исключение).
             var evnt = _eventService.GetEventByIdAsync(eventId, ct);
 
-            var booking = Booking.CreatePending(eventId);
+            var booking = Booking.Create(eventId);
 
             _bookingStore.Add(booking);
 
@@ -36,7 +36,7 @@ namespace EventApi.Application.Bookings
         public Task<BookingDto> ConfirmBookingAsync(Guid id, CancellationToken ct = default)
         {
             var booking = GetBookingById(id);
-            
+
             booking.Confirm();
 
             return Task.FromResult(new BookingDto(booking));

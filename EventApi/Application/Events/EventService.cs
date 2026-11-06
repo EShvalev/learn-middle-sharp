@@ -1,7 +1,5 @@
 ﻿using EventApi.Models.Events;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.CompilerServices;
 
 namespace EventApi.Application.Events
 {
@@ -54,10 +52,8 @@ namespace EventApi.Application.Events
         // Приватный метод для запроса экземпляра сущности из хранилища по id (нужен для Update)
         private Event GetEventById(Guid id)
         {
-            Event? evnt = _eventStore.GetAll().FirstOrDefault(e => e.Id == id);
-
             // Добавим для проверки исключение если событие не найдено
-            if (evnt == null)
+            if (!_eventStore.Get(id, out var evnt))
                 throw new EventNotFoundException(string.Format("Событие {0} не найдено.", id));
 
             return evnt;
@@ -70,10 +66,8 @@ namespace EventApi.Application.Events
 
         public Task<EventDto> CreateEventAsync(CreateEventDto dto, CancellationToken ct = default)
         {
-            // Эта валидация с выбросом исключения добавлена для тестов (проверка невалидных данных без использования контроллера).
-            dto.ThrowsExceptionIfInvalid();
-
-            var evnt = Event.CreateNew(
+            // Валидация инвариантов перенесена в саму модель.
+            var evnt = Event.Create(
                 title: dto.Title,
                 description: dto.Description,
                 startAt: dto.StartAt,
@@ -97,15 +91,17 @@ namespace EventApi.Application.Events
 
         public Task<EventDto> UpdateEventAsync(Guid id, CreateEventDto dto, CancellationToken ct = default)
         {
-            // Эта валидация с выбросом исключения добавлена для тестов (проверка невалидных данных без использования контроллера).
-            dto.ThrowsExceptionIfInvalid();
-
             var evnt = GetEventById(id);
 
-            evnt.Title = dto.Title;
-            evnt.Description = dto.Description;
-            evnt.StartAt = dto.StartAt;
-            evnt.EndAt = dto.EndAt;
+            // Валидация инвариантов перенесена в саму модель.
+            evnt.Update(
+                title: dto.Title,
+                description: dto.Description,
+                startAt: dto.StartAt,
+                endAt: dto.EndAt
+            );
+
+            _eventStore.Update(id, evnt);
 
             _logger.LogInformation("Обновлено событие с Id = {0}.", evnt.Id);
             return Task.FromResult(new EventDto(evnt));
@@ -116,7 +112,7 @@ namespace EventApi.Application.Events
             var evnt = GetEventByIdAsync(id);
 
             _eventStore.Remove(id);
-            
+
             _logger.LogInformation("Удалено событие с Id = {0}.", evnt.Id);
             return Task.CompletedTask;
         }

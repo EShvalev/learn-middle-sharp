@@ -191,7 +191,7 @@ namespace EventApi.Tests
         {
             // Arrange
             var eventId = _testGuid;
-            var expected = Booking.CreatePending(_testGuid);
+            var expected = Booking.Create(_testGuid);
 
             // Act
             _bookingStore.Add(expected);
@@ -208,7 +208,7 @@ namespace EventApi.Tests
             var eventId = _testGuid;
 
             // Act
-            var booking = Booking.CreatePending(_testGuid);
+            var booking = Booking.Create(_testGuid);
 
             // Assert
             Assert.Equal(BookingStatus.Pending, booking.Status);
@@ -222,7 +222,7 @@ namespace EventApi.Tests
             var eventId = _testGuid;
 
             // Act
-            var booking = Booking.CreatePending(_testGuid);
+            var booking = Booking.Create(_testGuid);
             booking.Confirm();
 
             // Assert

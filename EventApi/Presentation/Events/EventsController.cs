@@ -1,6 +1,4 @@
 ﻿using EventApi.Application.Events;
-using EventApi.Models.Bookings;
-using EventApi.Models.Events;
 using Microsoft.AspNetCore.Mvc;
 
 

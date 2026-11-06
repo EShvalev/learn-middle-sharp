@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using EventApi.Models.Events;
 
 namespace EventApi.Application.Events
 {
@@ -12,16 +11,6 @@ namespace EventApi.Application.Events
         public DateTime? StartAt { get; set; }
         [Required(ErrorMessage = "Дата окончания события обязательна.")]
         public DateTime? EndAt { get; set; }
-
-        public CreateEventDto() { Title = string.Empty; }
-
-        public CreateEventDto(Event evnt)
-        {
-            Title = evnt.Title;
-            Description = evnt.Description;
-            StartAt = evnt.StartAt;
-            EndAt = evnt.EndAt;
-        }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

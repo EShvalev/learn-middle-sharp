@@ -1,6 +1,4 @@
-﻿using EventApi.Models.Bookings;
-
-namespace EventApi.Application.Bookings
+﻿namespace EventApi.Application.Bookings
 {
     public interface IBookingService
     {
