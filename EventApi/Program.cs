@@ -35,7 +35,7 @@ public class Program
 
                     var customResponse = new ProblemDetails
                     {
-                        Status = StatusCodes.Status422UnprocessableEntity,
+                        Status = StatusCodes.Status400BadRequest,
                         Detail = errorsString
                     };
 
