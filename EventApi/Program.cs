@@ -39,7 +39,7 @@ public class Program
                         Detail = errorsString
                     };
 
-                    return new UnprocessableEntityObjectResult(customResponse);
+                    return new BadRequestObjectResult(customResponse);
                 };
             });
 
