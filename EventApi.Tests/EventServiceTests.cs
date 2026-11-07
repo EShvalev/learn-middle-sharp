@@ -7,14 +7,17 @@ namespace EventApi.Tests
     public class EventServiceTests : IClassFixture<EventApiFixture>
     {
         private readonly IEventService _eventService;
-        private Guid _zeroGuid = Guid.Parse("00000000-0000-0000-0000-000000000000");
-        private Guid _testGuid = Guid.Parse("00000005-0000-0000-0000-000000000000");
-        private Guid _testGuidToDelete = Guid.Parse("00000001-0000-0000-0000-000000000000");
+        private readonly Guid _zeroGuid;
+        private readonly Guid _testGuid;
+        private readonly Guid _testGuidToDelete;
         private readonly int _VeryLongPageSize = 1000000;
 
         public EventServiceTests(EventApiFixture fixture)
         {
             _eventService = fixture.eventService;
+            _zeroGuid = fixture.zeroGuid;
+            _testGuid = fixture.testEventGuid;
+            _testGuidToDelete = fixture.testEventGuidToDelete;
         }
 
         [Fact]

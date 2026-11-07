@@ -13,9 +13,10 @@ namespace EventApi.Models.Events
         private Event() { Title = string.Empty; }
 
         // Фабричный метод создания/инициализации
-        public static Event Create(string title, string? description = null, DateTime? startAt = null, DateTime? endAt = null)
+        public static Event Create(string title, string? description = null, DateTime? startAt = null, DateTime? endAt = null, bool withValidation = true)
         {
-            ValidateParams(title, description, startAt, endAt);
+            if (withValidation)
+                ValidateParams(title, description, startAt, endAt);
 
             var evnt = new Event()
             {
@@ -28,21 +29,7 @@ namespace EventApi.Models.Events
             return evnt;
         }
 
-        // Фабричный метод создания/инициализации (только для тестов - передается сгенерированный извне id, валидация парметров не выполняется)
-        public static Event Create(Guid id, string title, string? description = null, DateTime? startAt = null, DateTime? endAt = null)
-        {
-            var evnt = new Event()
-            {
-                Id = id,
-                Title = title,
-                Description = description,
-                StartAt = startAt,
-                EndAt = endAt
-            };
-            return evnt;
-        }
-
-        public Event Update(string title, string? description = null, DateTime? startAt = null, DateTime? endAt = null)
+        public Event Update(string title, string? description = null, DateTime? startAt = null, DateTime? endAt = null, bool withValidation = true)
         {
             ValidateParams(title, description, startAt, endAt);
 

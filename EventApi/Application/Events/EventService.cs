@@ -71,22 +71,14 @@ namespace EventApi.Application.Events
                 title: dto.Title,
                 description: dto.Description,
                 startAt: dto.StartAt,
-                endAt: dto.EndAt
+                endAt: dto.EndAt,
+                withValidation: true
             );
 
             _eventStore.Add(evnt);
 
             _logger.LogInformation("Создано событие с Id = {0}.", evnt.Id);
             return Task.FromResult(new EventDto(evnt));
-        }
-
-        // Метод нужен для тестов (первичное заполнение хранилища событий с предопределенными Id, без валидации).
-        public Guid CreateForTests(Event evnt)
-        {
-            _eventStore.Add(evnt);
-
-            _logger.LogInformation("Создано событие с Id = {0}.", evnt.Id);
-            return evnt.Id;
         }
 
         public Task<EventDto> UpdateEventAsync(Guid id, CreateEventDto dto, CancellationToken ct = default)
@@ -98,7 +90,8 @@ namespace EventApi.Application.Events
                 title: dto.Title,
                 description: dto.Description,
                 startAt: dto.StartAt,
-                endAt: dto.EndAt
+                endAt: dto.EndAt,
+                withValidation: true
             );
 
             _eventStore.Update(id, evnt);

@@ -36,7 +36,7 @@ namespace EventApi.Presentation.Events
 
         [HttpPost()]
         [ProducesResponseType(typeof(EventCreateResponse), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateEventDto eventReq, CancellationToken ct)
         {
             var dto = await _eventService.CreateEventAsync(eventReq, ct);
@@ -47,7 +47,7 @@ namespace EventApi.Presentation.Events
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Update(Guid id, CreateEventDto eventReq, CancellationToken ct)
         {
             var evnt = await _eventService.GetEventByIdAsync(id, ct);

@@ -5,8 +5,6 @@ namespace EventApi.Tests
     public class EventServiceFiltPagTests : IClassFixture<EventApiFixture>
     {
         private readonly IEventService _eventService;
-        private Guid _zeroGuid = Guid.Parse("00000000-0000-0000-0000-000000000000");
-        private Guid _testGuid = Guid.Parse("00000005-0000-0000-0000-000000000000");
         private readonly int _VeryLongPageSize = 1000000;
 
         public EventServiceFiltPagTests(EventApiFixture fixture)

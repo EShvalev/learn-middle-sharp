@@ -13,15 +13,19 @@ namespace EventApi.Tests
         private readonly IBookingService _bookingService;
         private readonly IEventService _eventService;
         private readonly IHostedService _bookingProcessingService;
-        private Guid _zeroGuid = Guid.Parse("00000000-0000-0000-0000-000000000000");
-        private Guid _testGuid = Guid.Parse("00000002-0000-0000-0000-000000000000");
-        private Guid _testGuidToDelete = Guid.Parse("00000005-0000-0000-0000-000000000000");
+        private readonly Guid _zeroGuid;
+        private readonly Guid _testGuid;
+        private readonly Guid _testGuidToDelete;
 
         public BookingServiceTests(EventApiFixture fixture)
         {
             _bookingStore = fixture.bookingStore;
             _bookingService = fixture.bookingService;
             _eventService = fixture.eventService;
+
+            _zeroGuid = fixture.zeroGuid;
+            _testGuid = fixture.testEventGuid;
+            _testGuidToDelete = fixture.testEventGuidToDelete;
 
             _bookingProcessingService = fixture.bookingProcessingService;
         }

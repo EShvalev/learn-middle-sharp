@@ -64,7 +64,7 @@ namespace EventApi.Presentation
                 BookingStatusException bse => StatusCodes.Status400BadRequest,
                 BookingNotFoundException nfe => StatusCodes.Status404NotFound,
                 EventNotFoundException nfe => StatusCodes.Status404NotFound,
-                ValidationException ve => StatusCodes.Status422UnprocessableEntity,
+                ValidationException ve => StatusCodes.Status400BadRequest,
                 _ => StatusCodes.Status500InternalServerError
             };
     }
