@@ -31,7 +31,7 @@ namespace EventApi.Presentation.Events
         public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         {
             var evnt = await _eventService.GetEventByIdAsync(id, ct);
-            return Ok(evnt);
+            return Ok(new EventDto(evnt));
         }
 
         [HttpPost()]

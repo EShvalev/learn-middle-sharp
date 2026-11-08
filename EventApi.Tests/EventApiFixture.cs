@@ -27,18 +27,18 @@ namespace EventApi.Tests
 
 
         private readonly List<CreateEventDto> _initStore = [
-            new CreateEventDto() { Title = "Джем-сэшн", Description = "Константин Хазанович", StartAt = Convert.ToDateTime("2026-10-06T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-06T21:00:00+03")},
-            new CreateEventDto() { Title = "Романтический джаз", Description = "Эльвира Трафова", StartAt = Convert.ToDateTime("2026-10-07T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-07T21:00:00+03")},
-            new CreateEventDto() { Title = "Петербургские мотивы", Description = "Ильдар Казаханов и его бэнд", StartAt = Convert.ToDateTime("2026-10-08T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-08T21:00:00+03")},
-            new CreateEventDto() { Title = "Джазовые портреты вокалистов", Description = "Звезды мирового джаза", StartAt = Convert.ToDateTime("2026-10-09T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-09T21:00:00+03")},
-            new CreateEventDto() { Title = "Сказки Чижика", Description = "Цикл джазовых сказок для самых маленьких", StartAt = Convert.ToDateTime("2026-10-10T12:00:00+03"), EndAt = Convert.ToDateTime("2026-10-10T14:00:00+03")},
-            new CreateEventDto() { Title = "Вечер памяти Станислава Говорухина", Description = "", StartAt = Convert.ToDateTime("2026-10-11T18:00:00+03"), EndAt = Convert.ToDateTime("2026-10-11T20:30:00+03")},
-            new CreateEventDto() { Title = "Весь этот джаз", Description = "Денис Кузьмин и ансамбль", StartAt = Convert.ToDateTime("2026-10-12T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-12T21:00:00+03")},
-            new CreateEventDto() { Title = "Джем-сэшн", Description = "Константин Хазанович", StartAt = Convert.ToDateTime("2026-10-20T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-20T21:00:00+03")},
-            new CreateEventDto() { Title = "Лэтин джаз", Description = "Концерт программы", StartAt = Convert.ToDateTime("2026-10-22T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-22T21:00:00+03")},
-            new CreateEventDto() { Title = "Традиционный джаз и свинг", Description = "", StartAt = Convert.ToDateTime("2026-10-24T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-24T21:00:00+03")},
-            new CreateEventDto() { Title = "Губная гармоника в джазе", Description = "", StartAt = Convert.ToDateTime("2026-10-27T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-27T21:00:00+03")},
-            new CreateEventDto() { Title = "Трибьют Фрэнку Синатре", Description = "", StartAt = Convert.ToDateTime("2026-10-30T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-30T21:00:00+03")}
+            new CreateEventDto() { Title = "Джем-сэшн", Description = "Константин Хазанович", StartAt = Convert.ToDateTime("2026-10-06T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-06T21:00:00+03"), TotalSeats = 20},
+            new CreateEventDto() { Title = "Романтический джаз", Description = "Эльвира Трафова", StartAt = Convert.ToDateTime("2026-10-07T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-07T21:00:00+03"), TotalSeats = 20},
+            new CreateEventDto() { Title = "Петербургские мотивы", Description = "Ильдар Казаханов и его бэнд", StartAt = Convert.ToDateTime("2026-10-08T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-08T21:00:00+03"), TotalSeats = 20},
+            new CreateEventDto() { Title = "Джазовые портреты вокалистов", Description = "Звезды мирового джаза", StartAt = Convert.ToDateTime("2026-10-09T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-09T21:00:00+03"), TotalSeats = 20},
+            new CreateEventDto() { Title = "Сказки Чижика", Description = "Цикл джазовых сказок для самых маленьких", StartAt = Convert.ToDateTime("2026-10-10T12:00:00+03"), EndAt = Convert.ToDateTime("2026-10-10T14:00:00+03"), TotalSeats = 20},
+            new CreateEventDto() { Title = "Вечер памяти Станислава Говорухина", Description = "", StartAt = Convert.ToDateTime("2026-10-11T18:00:00+03"), EndAt = Convert.ToDateTime("2026-10-11T20:30:00+03"), TotalSeats = 20},
+            new CreateEventDto() { Title = "Весь этот джаз", Description = "Денис Кузьмин и ансамбль", StartAt = Convert.ToDateTime("2026-10-12T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-12T21:00:00+03"), TotalSeats = 20},
+            new CreateEventDto() { Title = "Джем-сэшн", Description = "Константин Хазанович", StartAt = Convert.ToDateTime("2026-10-20T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-20T21:00:00+03"), TotalSeats = 20},
+            new CreateEventDto() { Title = "Лэтин джаз", Description = "Концерт программы", StartAt = Convert.ToDateTime("2026-10-22T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-22T21:00:00+03"), TotalSeats = 20},
+            new CreateEventDto() { Title = "Традиционный джаз и свинг", Description = "", StartAt = Convert.ToDateTime("2026-10-24T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-24T21:00:00+03"), TotalSeats = 20},
+            new CreateEventDto() { Title = "Губная гармоника в джазе", Description = "", StartAt = Convert.ToDateTime("2026-10-27T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-27T21:00:00+03"), TotalSeats = 20},
+            new CreateEventDto() { Title = "Трибьют Фрэнку Синатре", Description = "", StartAt = Convert.ToDateTime("2026-10-30T19:00:00+03"), EndAt = Convert.ToDateTime("2026-10-30T21:00:00+03"), TotalSeats = 20}
             ];
 
         public EventApiFixture()

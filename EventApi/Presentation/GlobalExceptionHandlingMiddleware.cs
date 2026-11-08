@@ -65,6 +65,7 @@ namespace EventApi.Presentation
                 BookingNotFoundException nfe => StatusCodes.Status404NotFound,
                 EventNotFoundException nfe => StatusCodes.Status404NotFound,
                 ValidationException ve => StatusCodes.Status400BadRequest,
+                NoAvailableSeatsException nas => StatusCodes.Status409Conflict,
                 _ => StatusCodes.Status500InternalServerError
             };
     }

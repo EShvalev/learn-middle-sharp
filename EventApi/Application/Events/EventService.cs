@@ -49,19 +49,24 @@ namespace EventApi.Application.Events
             return Task.FromResult(new PaginatedResult<EventDto>(items, page, curPageSize, totalItems));
         }
 
-        // Приватный метод для запроса экземпляра сущности из хранилища по id (нужен для Update)
-        private Event GetEventById(Guid id)
+        //// Приватный метод для запроса экземпляра сущности из хранилища по id (нужен для Update)
+        //private Event GetEventById(Guid id)
+        //{
+        //    // Добавим для проверки исключение если событие не найдено
+        //    if (!_eventStore.Get(id, out var evnt))
+        //        throw new EventNotFoundException(string.Format("Событие {0} не найдено.", id));
+
+        //    return evnt;
+        //}
+
+        public Task<Event> GetEventByIdAsync(Guid id, CancellationToken ct = default)
         {
             // Добавим для проверки исключение если событие не найдено
             if (!_eventStore.Get(id, out var evnt))
                 throw new EventNotFoundException(string.Format("Событие {0} не найдено.", id));
 
-            return evnt;
-        }
-
-        public Task<EventDto> GetEventByIdAsync(Guid id, CancellationToken ct = default)
-        {
-            return Task.FromResult(new EventDto(GetEventById(id)));
+            return Task.FromResult(evnt);
+            //return Task.FromResult(new EventDto(GetEventById(id)));
         }
 
         public Task<EventDto> CreateEventAsync(CreateEventDto dto, CancellationToken ct = default)
@@ -72,6 +77,7 @@ namespace EventApi.Application.Events
                 description: dto.Description,
                 startAt: dto.StartAt,
                 endAt: dto.EndAt,
+                totalSeats: dto.TotalSeats,
                 withValidation: true
             );
 
@@ -83,7 +89,7 @@ namespace EventApi.Application.Events
 
         public Task<EventDto> UpdateEventAsync(Guid id, CreateEventDto dto, CancellationToken ct = default)
         {
-            var evnt = GetEventById(id);
+            var evnt = GetEventByIdAsync(id).Result;
 
             // Валидация инвариантов перенесена в саму модель.
             evnt.Update(
@@ -91,6 +97,7 @@ namespace EventApi.Application.Events
                 description: dto.Description,
                 startAt: dto.StartAt,
                 endAt: dto.EndAt,
+                totalSeats: dto.TotalSeats,
                 withValidation: true
             );
 

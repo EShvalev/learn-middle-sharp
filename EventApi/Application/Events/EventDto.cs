@@ -9,6 +9,8 @@ namespace EventApi.Application.Events
         public string? Description { get; set; }
         public DateTime? StartAt { get; set; }
         public DateTime? EndAt { get; set; }
+        public int TotalSeats { get; set; }
+        public int AvailableSeats { get; set; }
 
         public EventDto(Event evnt)
         {
@@ -17,6 +19,8 @@ namespace EventApi.Application.Events
             Description = evnt.Description;
             StartAt = evnt.StartAt;
             EndAt = evnt.EndAt;
+            TotalSeats = evnt.TotalSeats;
+            AvailableSeats = evnt.AvailableSeats;
         }
     }
 }

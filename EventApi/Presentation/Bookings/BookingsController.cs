@@ -46,6 +46,7 @@ namespace EventApi.Presentation.Bookings
         [HttpPost("~/api/Events/{id}/book")]
         [ProducesResponseType(typeof(BookingCreateResponse), StatusCodes.Status202Accepted)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> CreateAsync([FromRoute] Guid id, CancellationToken ct)
         {
             var booking = await _bookingService.CreateBookingAsync(id, ct);

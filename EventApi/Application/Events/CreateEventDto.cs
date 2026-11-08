@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using EventApi.Models.Events;
+using System.ComponentModel.DataAnnotations;
 
 namespace EventApi.Application.Events
 {
@@ -11,6 +12,18 @@ namespace EventApi.Application.Events
         public DateTime? StartAt { get; set; }
         [Required(ErrorMessage = "Дата окончания события обязательна.")]
         public DateTime? EndAt { get; set; }
+        [Required(ErrorMessage = "Общее количество мест обязательно.")]
+        public int? TotalSeats { get; set; }
+
+        public CreateEventDto() { Title = string.Empty; }
+        public CreateEventDto(Event evnt)
+        {
+            Title = evnt.Title;
+            Description = evnt.Description;
+            StartAt = evnt.StartAt;
+            EndAt = evnt.EndAt;
+            TotalSeats = evnt.TotalSeats;
+        }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
@@ -19,8 +32,15 @@ namespace EventApi.Application.Events
             // Проверку EndAt > StartAt реализуем здесь
             if (!(EndAt > StartAt))
             {
-                errors.Add(new ValidationResult("Дата окончания должна быть позже даты начала события.", new string[] { "Дата окончания" }));
+                errors.Add(new ValidationResult("Дата окончания должна быть позже даты начала события.", ["Дата окончания"]));
             }
+
+            // Проверка на минимальное значение TotalSeats
+            if (TotalSeats <= 0)
+            {
+                errors.Add(new ValidationResult("Общее количество мест должно быть больше 0.", ["Общее количество мест"]));
+            }
+
 
             return errors;
         }

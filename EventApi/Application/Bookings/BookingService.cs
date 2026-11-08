@@ -8,6 +8,7 @@ namespace EventApi.Application.Bookings
         private readonly IEventService _eventService;
         private readonly IBookingStore _bookingStore;
         private readonly ILogger<BookingService> _logger;
+        private readonly object _bookingLock = new();
 
         public BookingService(
             IEventService eventService,
@@ -22,12 +23,24 @@ namespace EventApi.Application.Bookings
 
         public async Task<BookingDto> CreateBookingAsync(Guid eventId, CancellationToken ct = default)
         {
-            // Этот вызов нужен чтобы проверить существование события с данным id (если нет, выбрасывается исключение).
-            var evnt = _eventService.GetEventByIdAsync(eventId, ct);
+            Booking booking;
 
-            var booking = Booking.Create(eventId);
+            lock (_bookingLock)
+            {
+                var evnt = _eventService.GetEventByIdAsync(eventId, ct).Result;
 
-            _bookingStore.Add(booking);
+                if (!evnt.TryReserveSeats())
+                    throw new NoAvailableSeatsException("Недостаточно свободных мест для этого бронирования");
+
+                booking = Booking.Create(eventId);
+                var dto = new CreateEventDto(evnt);
+                
+                // На самом деле этот вызов (сохранение события) не нужен, т.к. поле AvailableSeats уже обновлено при успешном вызове TryReserveSeats(), а другие поля события здесь не меняются.
+                // Данный вызов будет нужен, когда хранилище событий в памяти будет заменено на репозиторий, работающий с БД.
+                _eventService.UpdateEventAsync(eventId, dto, ct);
+
+                _bookingStore.Add(booking);
+            }
 
             _logger.LogInformation("Создано бронирование {0} на событие {1}.", booking.Id, booking.EventId);
             return new BookingDto(booking);
