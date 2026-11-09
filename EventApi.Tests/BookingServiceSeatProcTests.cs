@@ -35,15 +35,15 @@ namespace EventApi.Tests
         // Вспомогательный метод для тестов: создает тестовое событие.
         private Event CreateTestEvent(int totalSeats)
         {
-            var createDto =  new CreateEventDto() 
-            { 
-                Title = "Джазовые портреты вокалистов", 
-                Description = "Звезды мирового джаза", 
-                StartAt = Convert.ToDateTime("2026-10-09T19:00:00+03"), 
-                EndAt = Convert.ToDateTime("2026-10-09T21:00:00+03"), 
+            var createDto = new CreateEventDto()
+            {
+                Title = "Джазовые портреты вокалистов",
+                Description = "Звезды мирового джаза",
+                StartAt = Convert.ToDateTime("2026-10-09T19:00:00+03"),
+                EndAt = Convert.ToDateTime("2026-10-09T21:00:00+03"),
                 TotalSeats = totalSeats
             };
-            
+
             var dto = _eventService.CreateEventAsync(createDto, CancellationToken.None).Result;
             var evnt = _eventService.GetEventByIdAsync(dto.Id, CancellationToken.None);
 

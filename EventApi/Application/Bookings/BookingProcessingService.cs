@@ -73,7 +73,7 @@ namespace EventApi.Application.Bookings
         {
             // Имитируем задержку
             await Task.Delay(_processingDelay, ct);
-            
+
             // Семафор входит в асинхронное ожидание
             await _processingSemaphore.WaitAsync(ct);
 

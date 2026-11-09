@@ -77,7 +77,7 @@ namespace EventApi.Models.Events
             }
             while (Interlocked.CompareExchange(ref this.availableSeats, updated, current) != current);
 
-            return true;       
+            return true;
         }
         public void ReleaseSeats(int count = 1)
         {
