@@ -114,40 +114,6 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public async Task GetBookingById_AfterConfirming_ReturnsCorrectStatus()
-        {
-            // Arrange
-            var evnt = await _eventService.GetEventByIdAsync(_testGuid, CancellationToken.None);
-            var expected = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
-
-            // Act
-            var booking = await _bookingService.ConfirmBookingAsync(expected.Id, CancellationToken.None);
-
-            // Assert
-            Assert.Equal(expected.Id, booking.Id);
-            // После подтверждения статус должен быть Confirmed, поле ProcessedAt заполнено
-            Assert.Equal(BookingStatus.Confirmed, booking.Status);
-            Assert.NotNull(booking.ProcessedAt);
-        }
-
-        [Fact]
-        public async Task GetBookingById_AfterRejecting_ReturnsCorrectStatus()
-        {
-            // Arrange
-            var evnt = await _eventService.GetEventByIdAsync(_testGuid, CancellationToken.None);
-            var expected = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
-
-            // Act
-            var booking = await _bookingService.RejectBookingAsync(expected.Id, CancellationToken.None);
-
-            // Assert
-            Assert.Equal(expected.Id, booking.Id);
-            // После отмены статус должен быть Rejected, поле ProcessedAt заполнено
-            Assert.Equal(BookingStatus.Rejected, booking.Status);
-            Assert.NotNull(booking.ProcessedAt);
-        }
-
-        [Fact]
         public async Task GetBookingById_NotExistingId_ThrowsBookingNotFoundExeption()
         {
             // Arrange

@@ -32,13 +32,11 @@ namespace EventApi.Application.Bookings
                 if (!evnt.TryReserveSeats())
                     throw new NoAvailableSeatsException("Недостаточно свободных мест для этого бронирования");
 
-                booking = Booking.Create(eventId);
-                var dto = new CreateEventDto(evnt);
-                
                 // На самом деле этот вызов (сохранение события) не нужен, т.к. поле AvailableSeats уже обновлено при успешном вызове TryReserveSeats(), а другие поля события здесь не меняются.
                 // Данный вызов будет нужен, когда хранилище событий в памяти будет заменено на репозиторий, работающий с БД.
-                _eventService.UpdateEventAsync(eventId, dto, ct);
+                _eventService.UpdateEventAsync(eventId, new CreateEventDto(evnt), ct);
 
+                booking = Booking.Create(eventId);
                 _bookingStore.Add(booking);
             }
 
@@ -51,6 +49,7 @@ namespace EventApi.Application.Bookings
             var booking = GetBookingById(id);
 
             booking.Confirm();
+            _bookingStore.Update(booking.Id, booking);
 
             return Task.FromResult(new BookingDto(booking));
         }
@@ -59,7 +58,18 @@ namespace EventApi.Application.Bookings
         {
             var booking = GetBookingById(id);
 
-            booking.Reject();
+            lock (_bookingLock)
+            {
+                booking.Reject();
+                _bookingStore.Update(booking.Id, booking);
+
+                var evnt = _eventService.GetEventByIdAsync(booking.EventId, ct).Result;
+                evnt.ReleaseSeats();
+
+                // На самом деле этот вызов (сохранение события) не нужен, т.к. поле AvailableSeats уже обновлено при вызове ReleaseSeats(), а другие поля события здесь не меняются.
+                // Данный вызов будет нужен, когда хранилище событий в памяти будет заменено на репозиторий, работающий с БД.
+                _eventService.UpdateEventAsync(booking.EventId, new CreateEventDto(evnt), ct);
+            }
 
             return Task.FromResult(new BookingDto(booking));
         }

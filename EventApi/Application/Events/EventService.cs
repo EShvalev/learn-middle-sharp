@@ -83,7 +83,7 @@ namespace EventApi.Application.Events
 
             _eventStore.Add(evnt);
 
-            _logger.LogInformation("Создано событие с Id = {0}.", evnt.Id);
+            _logger.LogInformation("Создано событие {EventId}.", evnt.Id);
             return Task.FromResult(new EventDto(evnt));
         }
 
@@ -103,7 +103,7 @@ namespace EventApi.Application.Events
 
             _eventStore.Update(id, evnt);
 
-            _logger.LogInformation("Обновлено событие с Id = {0}.", evnt.Id);
+            _logger.LogInformation("Обновлено событие {EventId}.", evnt.Id);
             return Task.FromResult(new EventDto(evnt));
         }
 
@@ -113,7 +113,7 @@ namespace EventApi.Application.Events
 
             _eventStore.Remove(id);
 
-            _logger.LogInformation("Удалено событие с Id = {0}.", evnt.Id);
+            _logger.LogInformation("Удалено событие {EventId}.", evnt.Id);
             return Task.CompletedTask;
         }
     }

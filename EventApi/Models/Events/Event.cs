@@ -70,7 +70,7 @@ namespace EventApi.Models.Events
             {
                 current = this.AvailableSeats;
 
-                if (current - count <= 0)
+                if (current - count < 0)
                     return false;
 
                 updated = current - count;

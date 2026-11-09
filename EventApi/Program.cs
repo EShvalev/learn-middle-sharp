@@ -31,7 +31,7 @@ public class Program
 
                     var errorsString = string.Join(Environment.NewLine, errors.Select(kv => $"{kv.Key}: {kv.Value}"));
 
-                    logger.LogError($"Ошибка валидации: {errorsString}");
+                    logger.LogError("Ошибка валидации: {errors}", errorsString);
 
                     var customResponse = new ProblemDetails
                     {

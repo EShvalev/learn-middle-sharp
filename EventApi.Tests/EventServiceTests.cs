@@ -47,7 +47,7 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public async Task GetEventById_IfNotExists_ThrowsEventNotFoundExeption()
+        public async Task GetEventById_IfNotExists_ThrowsEventNotFoundException()
         {
             // Arrange
             var id = _zeroGuid;
@@ -70,7 +70,7 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public async Task CreateEvent_IfDateInvalid_ThrowsValidationExeption()
+        public async Task CreateEvent_IfDateInvalid_ThrowsValidationException()
         {
             // Arrange
             var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
@@ -98,7 +98,7 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public async Task UpdateEvent_IfNotExists_ThrowsEventNotFoundExeption()
+        public async Task UpdateEvent_IfNotExists_ThrowsEventNotFoundException()
         {
             // Arrange
             var envt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
@@ -109,7 +109,7 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public async Task UpdateEvent_IfDateInvalid_ThrowsValidationExeption()
+        public async Task UpdateEvent_IfDateInvalid_ThrowsValidationException()
         {
             // Arrange
             var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };

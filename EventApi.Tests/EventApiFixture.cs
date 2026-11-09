@@ -72,7 +72,7 @@ namespace EventApi.Tests
             var factory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
             loggerBPS = factory.CreateLogger<BookingProcessingService>();
-            bookingProcessingService = new BookingProcessingService(bookingStore, loggerBPS);
+            bookingProcessingService = new BookingProcessingService(eventStore, bookingStore, loggerBPS);
 
             Console.WriteLine("EventApiFixture() constructor called.");
         }
