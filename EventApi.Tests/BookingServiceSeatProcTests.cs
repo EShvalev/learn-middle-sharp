@@ -123,55 +123,16 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public async Task CreateConcurrentBookings_ExistingEvent_ReturnsCorrectSuccessCountAndExceptionCount()
+        public async Task CreateBooking_NotExistingEvent_ThrowsEventNotFoundExeption()
         {
             // Arrange
-            var evnt = CreateTestEvent(totalSeats: 5);
+            var eventId = _zeroGuid;
 
-            int count = 20; // 5 должно создаться успешно + 15 NoAvailableSeatsException
-            List<Task> allTasks = new List<Task>();
-
-            for (int i = 0; i < count; i++)
-            {
-                allTasks.Add(Task.Run(() => _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None)));
-            }
-
-            // Act
-            var exception = await Assert.ThrowsAsync<NoAvailableSeatsException>(async () =>
-            {
-                await Task.WhenAll(allTasks);
-            });
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<EventNotFoundException>(() => _bookingService.CreateBookingAsync(eventId, CancellationToken.None));
 
             // Assert
-            Assert.Equal(5, allTasks.Where(t => t.IsCompletedSuccessfully).Count());
-            Assert.Equal(15, allTasks.Where(t => t.IsFaulted && typeof(NoAvailableSeatsException) == t.Exception?.InnerException?.GetType()).Count());
-        }
-
-        [Fact]
-        public async Task CreateConcurrentBookings_ExistingEvent_ReturnsCorrectUniqueIdsCount()
-        {
-            // Arrange
-            int count = 10; // должны создаться успешно с уникальными Id
-            var evnt = CreateTestEvent(totalSeats: count);
-
-            List<Task> allTasks = new List<Task>();
-            ConcurrentBag<Guid> ids = new ConcurrentBag<Guid>();
-
-            // Act
-            for (int i = 0; i < count; i++)
-            {
-                allTasks.Add(Task.Run(() =>
-                {
-                    var booking = _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
-                    ids.Add(booking.Result.Id);
-                }
-                ));
-            }
-
-            await Task.WhenAll(allTasks);
-
-            // Assert
-            Assert.Equal(count, ids.Count());
+            Assert.Equal(typeof(EventNotFoundException), exception.GetType());
         }
 
         [Fact]
@@ -186,19 +147,6 @@ namespace EventApi.Tests
 
             // Assert
             Assert.Equal(typeof(NoAvailableSeatsException), exception.GetType());
-        }
-
-        [Fact]
-        public async Task CreateBooking_NotExistingEvent_ThrowsEventNotFoundExeption()
-        {
-            // Arrange
-            var eventId = _zeroGuid;
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<EventNotFoundException>(() => _bookingService.CreateBookingAsync(eventId, CancellationToken.None));
-
-            // Assert
-            Assert.Equal(typeof(EventNotFoundException), exception.GetType());
         }
 
         [Fact]
@@ -256,6 +204,58 @@ namespace EventApi.Tests
             // Вторая бронь создана в начальном статусе
             Assert.Equal(BookingStatus.Pending, another_booking.Status);
             Assert.Null(another_booking.ProcessedAt);
+        }
+
+        [Fact]
+        public async Task CreateConcurrentBookings_ExistingEvent_ReturnsCorrectSuccessCountAndExceptionCount()
+        {
+            // Arrange
+            var evnt = CreateTestEvent(totalSeats: 5);
+
+            int count = 20; // 5 должно создаться успешно + 15 NoAvailableSeatsException
+            List<Task> allTasks = new List<Task>();
+
+            for (int i = 0; i < count; i++)
+            {
+                allTasks.Add(Task.Run(() => _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None)));
+            }
+
+            // Act
+            var exception = await Assert.ThrowsAsync<NoAvailableSeatsException>(async () =>
+            {
+                await Task.WhenAll(allTasks);
+            });
+
+            // Assert
+            Assert.Equal(5, allTasks.Where(t => t.IsCompletedSuccessfully).Count());
+            Assert.Equal(15, allTasks.Where(t => t.IsFaulted && typeof(NoAvailableSeatsException) == t.Exception?.InnerException?.GetType()).Count());
+        }
+
+        [Fact]
+        public async Task CreateConcurrentBookings_ExistingEvent_ReturnsCorrectUniqueIdsCount()
+        {
+            // Arrange
+            int count = 10; // должны создаться успешно с уникальными Id
+            var evnt = CreateTestEvent(totalSeats: count);
+
+            List<Task> allTasks = new List<Task>();
+            ConcurrentBag<Guid> ids = new ConcurrentBag<Guid>();
+
+            // Act
+            for (int i = 0; i < count; i++)
+            {
+                allTasks.Add(Task.Run(() =>
+                {
+                    var booking = _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
+                    ids.Add(booking.Result.Id);
+                }
+                ));
+            }
+
+            await Task.WhenAll(allTasks);
+
+            // Assert
+            Assert.Equal(count, ids.Count());
         }
     }
 }
