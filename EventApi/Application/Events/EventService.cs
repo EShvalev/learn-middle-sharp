@@ -49,16 +49,6 @@ namespace EventApi.Application.Events
             return Task.FromResult(new PaginatedResult<EventDto>(items, page, curPageSize, totalItems));
         }
 
-        //// Приватный метод для запроса экземпляра сущности из хранилища по id (нужен для Update)
-        //private Event GetEventById(Guid id)
-        //{
-        //    // Добавим для проверки исключение если событие не найдено
-        //    if (!_eventStore.Get(id, out var evnt))
-        //        throw new EventNotFoundException(string.Format("Событие {0} не найдено.", id));
-
-        //    return evnt;
-        //}
-
         public Task<Event> GetEventByIdAsync(Guid id, CancellationToken ct = default)
         {
             // Добавим для проверки исключение если событие не найдено
@@ -66,7 +56,6 @@ namespace EventApi.Application.Events
                 throw new EventNotFoundException(string.Format("Событие {0} не найдено.", id));
 
             return Task.FromResult(evnt);
-            //return Task.FromResult(new EventDto(GetEventById(id)));
         }
 
         public Task<EventDto> CreateEventAsync(CreateEventDto dto, CancellationToken ct = default)
@@ -77,7 +66,7 @@ namespace EventApi.Application.Events
                 description: dto.Description,
                 startAt: dto.StartAt,
                 endAt: dto.EndAt,
-                totalSeats: dto.TotalSeats,
+                totalSeats: dto.TotalSeats ?? 0,
                 withValidation: true
             );
 
@@ -109,7 +98,7 @@ namespace EventApi.Application.Events
 
         public Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var evnt = GetEventByIdAsync(id);
+            var evnt = GetEventByIdAsync(id).Result;
 
             _eventStore.Remove(id);
 

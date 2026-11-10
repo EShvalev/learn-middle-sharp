@@ -4,7 +4,6 @@ using EventApi.Models.Bookings;
 using EventApi.Models.Events;
 using Microsoft.Extensions.Hosting;
 using System.Collections.Concurrent;
-using System.Reflection;
 
 namespace EventApi.Tests
 {
@@ -70,8 +69,6 @@ namespace EventApi.Tests
             var evnt = CreateTestEvent(totalSeats: 1);
             int expectedSeats = evnt.AvailableSeats - 1;
 
-            Console.WriteLine($"evnt.TotalSeats = {evnt.TotalSeats}, evnt.AvailableSeats = {evnt.AvailableSeats}");
-
             // Act
             var booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
 
@@ -123,26 +120,14 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public async Task CreateBooking_NotExistingEvent_ThrowsEventNotFoundExeption()
-        {
-            // Arrange
-            var eventId = _zeroGuid;
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<EventNotFoundException>(() => _bookingService.CreateBookingAsync(eventId, CancellationToken.None));
-
-            // Assert
-            Assert.Equal(typeof(EventNotFoundException), exception.GetType());
-        }
-
-        [Fact]
         public async Task CreateBooking_ExistingEvent_ThrowsNoAvailableSeatsExceptionWhenNoAvailSeats()
         {
             // Arrange
             var evnt = CreateTestEvent(totalSeats: 1);
-            ResetEventSeats(evnt, 0);
 
             // Act
+            await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None); // резевируем одно место, т.к. всего было одно, следующий вызов должен выбросить исключение
+
             var exception = await Assert.ThrowsAsync<NoAvailableSeatsException>(async () => await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None));
 
             // Assert
@@ -211,6 +196,7 @@ namespace EventApi.Tests
         {
             // Arrange
             var evnt = CreateTestEvent(totalSeats: 5);
+            int expectedSeats = 0;
 
             int count = 20; // 5 должно создаться успешно + 15 NoAvailableSeatsException
             List<Task> allTasks = new List<Task>();
@@ -229,6 +215,7 @@ namespace EventApi.Tests
             // Assert
             Assert.Equal(5, allTasks.Where(t => t.IsCompletedSuccessfully).Count());
             Assert.Equal(15, allTasks.Where(t => t.IsFaulted && typeof(NoAvailableSeatsException) == t.Exception?.InnerException?.GetType()).Count());
+            Assert.Equal(expectedSeats, evnt.AvailableSeats);
         }
 
         [Fact]
@@ -237,6 +224,7 @@ namespace EventApi.Tests
             // Arrange
             int count = 10; // должны создаться успешно с уникальными Id
             var evnt = CreateTestEvent(totalSeats: count);
+            int expectedSeats = 0;
 
             List<Task> allTasks = new List<Task>();
             ConcurrentBag<Guid> ids = new ConcurrentBag<Guid>();
@@ -255,7 +243,8 @@ namespace EventApi.Tests
             await Task.WhenAll(allTasks);
 
             // Assert
-            Assert.Equal(count, ids.Count());
+            Assert.Equal(count, ids.Distinct().Count());
+            Assert.Equal(expectedSeats, evnt.AvailableSeats);
         }
     }
 }

@@ -8,7 +8,9 @@ namespace EventApi.Application.Bookings
         private readonly IEventService _eventService;
         private readonly IBookingStore _bookingStore;
         private readonly ILogger<BookingService> _logger;
-        private readonly object _bookingLock = new();
+
+        // По замечанию ревью спринта 4 сделал _bookingLock статическим, чтобы при scoped регистрации сервиса вызовы из разных инстансов разделяли один и тот же локер
+        private static readonly object _bookingLock = new();
 
         public BookingService(
             IEventService eventService,
@@ -23,12 +25,11 @@ namespace EventApi.Application.Bookings
 
         public async Task<BookingDto> CreateBookingAsync(Guid eventId, CancellationToken ct = default)
         {
+            var evnt = await _eventService.GetEventByIdAsync(eventId, ct);
             Booking booking;
 
             lock (_bookingLock)
             {
-                var evnt = _eventService.GetEventByIdAsync(eventId, ct).Result;
-
                 if (!evnt.TryReserveSeats())
                     throw new NoAvailableSeatsException("Недостаточно свободных мест для этого бронирования");
 
@@ -54,16 +55,16 @@ namespace EventApi.Application.Bookings
             return Task.FromResult(new BookingDto(booking));
         }
 
-        public Task<BookingDto> RejectBookingAsync(Guid id, CancellationToken ct = default)
+        public async Task<BookingDto> RejectBookingAsync(Guid id, CancellationToken ct = default)
         {
             var booking = GetBookingById(id);
+            var evnt = await _eventService.GetEventByIdAsync(booking.EventId, ct);
 
             lock (_bookingLock)
             {
                 booking.Reject();
                 _bookingStore.Update(booking.Id, booking);
 
-                var evnt = _eventService.GetEventByIdAsync(booking.EventId, ct).Result;
                 evnt.ReleaseSeats();
 
                 // На самом деле этот вызов (сохранение события) не нужен, т.к. поле AvailableSeats уже обновлено при вызове ReleaseSeats(), а другие поля события здесь не меняются.
@@ -71,7 +72,7 @@ namespace EventApi.Application.Bookings
                 _eventService.UpdateEventAsync(booking.EventId, new CreateEventDto(evnt), ct);
             }
 
-            return Task.FromResult(new BookingDto(booking));
+            return new BookingDto(booking);
         }
 
         private Booking GetBookingById(Guid id)

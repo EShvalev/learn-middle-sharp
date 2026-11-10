@@ -32,22 +32,26 @@ namespace EventApi.Presentation
 
         private async Task HandleException(HttpContext httpContext, Exception ex)
         {
-            _logger.LogError(
-                ex,
-                "Unhandled exception. Method={Method}, Path={Path}, RequestId={RequestId}",
-                httpContext.Request.Method,
-                httpContext.Request.Path,
-                httpContext.Request.Headers["x-request-id"]);
+            var statusCode = MapStatusCode(ex);
+
+            // Логируем только 500 ошибки (учел замечание ревью по спринту 4)
+            if (statusCode == StatusCodes.Status500InternalServerError)
+            {
+                _logger.LogError(
+                    ex,
+                    "Unhandled exception. Method={Method}, Path={Path}, RequestId={RequestId}",
+                    httpContext.Request.Method,
+                    httpContext.Request.Path,
+                    httpContext.Request.Headers["x-request-id"]);
+            }
 
             if (httpContext.Response.HasStarted)
             {
                 return;
             }
 
-            var statusCode = MapStatusCode(ex);
-
             httpContext.Response.StatusCode = statusCode;
-            httpContext.Response.ContentType = "application/json";
+            httpContext.Response.ContentType = "application/problem+json";
 
             var error = new ProblemDetails
             {

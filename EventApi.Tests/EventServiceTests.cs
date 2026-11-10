@@ -60,7 +60,7 @@ namespace EventApi.Tests
         public async Task CreateEvent_OneEvent_ReturnsId()
         {
             // Arrange
-            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
+            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
 
             // Act
             var dto = await _eventService.CreateEventAsync(evnt, CancellationToken.None);
@@ -73,7 +73,7 @@ namespace EventApi.Tests
         public async Task CreateEvent_IfDateInvalid_ThrowsValidationException()
         {
             // Arrange
-            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
+            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02"), TotalSeats = 200 };
 
             // Act & Assert
             await Assert.ThrowsAsync<ValidationException>(() => _eventService.CreateEventAsync(evnt, CancellationToken.None));
@@ -83,7 +83,7 @@ namespace EventApi.Tests
         public async Task UpdateEvent_IfExists_ReturnsUpdated()
         {
             // Arrange
-            var expected = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
+            var expected = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
             var id = _testGuid;
 
             // Act
@@ -101,7 +101,7 @@ namespace EventApi.Tests
         public async Task UpdateEvent_IfNotExists_ThrowsEventNotFoundException()
         {
             // Arrange
-            var envt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
+            var envt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
             var id = _zeroGuid;
 
             // Act & Assert
@@ -112,7 +112,7 @@ namespace EventApi.Tests
         public async Task UpdateEvent_IfDateInvalid_ThrowsValidationException()
         {
             // Arrange
-            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
+            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02"), TotalSeats = 200 };
             var id = _testGuid;
 
             // Act & Assert

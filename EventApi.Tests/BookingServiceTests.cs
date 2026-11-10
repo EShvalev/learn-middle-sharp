@@ -61,14 +61,23 @@ namespace EventApi.Tests
         {
             // Arrange
             var evnt = await _eventService.GetEventByIdAsync(_testGuid, CancellationToken.None);
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20)); // предельное время цикла, чтобы не зависал бескоонечно если что не так
             using var taskBPS = _bookingProcessingService.StartAsync(cts.Token);
 
             // Act
-            var booking_before_processing = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
-            await Task.Delay(7000); // ждем 7 сек = 5+2 (тик таймера + задержка обработки)
-            var booking_after_processing = await _bookingService.GetBookingByIdAsync(booking_before_processing.Id, CancellationToken.None);
-            cts.Cancel();
+            BookingDto booking_before_processing = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
+            BookingDto booking_after_processing = booking_before_processing;
+
+            while (!cts.Token.IsCancellationRequested)
+            {
+                await Task.Delay(7000); // на каждой итерации ждем 7 сек = 5+2 (тик BPS таймера + задержка обработки)
+                booking_after_processing = await _bookingService.GetBookingByIdAsync(booking_before_processing.Id, CancellationToken.None);
+
+                // Если статус брони изменился (не начальный), выходим из цикла через cts.Cancel (он же остановливает фоновый BPS)
+                if (booking_after_processing.Status != BookingStatus.Pending)
+                    cts.Cancel();
+            }
+            ;
 
             // Assert
             Assert.Equal(BookingStatus.Pending, booking_before_processing.Status);

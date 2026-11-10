@@ -27,7 +27,7 @@ namespace EventApi.Presentation.Events
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         {
             var evnt = await _eventService.GetEventByIdAsync(id, ct);
@@ -36,44 +36,29 @@ namespace EventApi.Presentation.Events
 
         [HttpPost()]
         [ProducesResponseType(typeof(EventCreateResponse), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateEventDto eventReq, CancellationToken ct)
         {
             var dto = await _eventService.CreateEventAsync(eventReq, ct);
-
             return CreatedAtAction(nameof(GetById), new { id = dto.Id }, new EventCreateResponse { Id = dto.Id });
         }
 
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Update(Guid id, CreateEventDto eventReq, CancellationToken ct)
         {
-            var evnt = await _eventService.GetEventByIdAsync(id, ct);
-            if (evnt == null)
-            {
-                return NotFound();
-            }
-
             await _eventService.UpdateEventAsync(id, eventReq, ct);
-
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
         {
-            var evnt = await _eventService.GetEventByIdAsync(id, ct);
-            if (evnt == null)
-            {
-                return NotFound();
-            }
-
             await _eventService.DeleteAsync(id, ct);
-
             return NoContent();
         }
     }

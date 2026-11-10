@@ -15,9 +15,7 @@ public class Program
         builder.Services.AddControllers()
             .ConfigureApiBehaviorOptions(options =>
             {
-                // Оставляем автоматическую проверку валидации, настраиваем только единый формат ошибки + логирование.
-                //options.SuppressModelStateInvalidFilter = true;
-
+                // Оставляем автоматическую проверку валидации (options.SuppressModelStateInvalidFilter = true), настраиваем только единый формат ошибки + логирование.
                 options.InvalidModelStateResponseFactory = context =>
                 {
                     var errors = context.ModelState

@@ -78,6 +78,7 @@ namespace EventApi.Application.Bookings
             await _processingSemaphore.WaitAsync(ct);
 
             Event? evnt = null;
+            bool needReleaseSeats = false;
             try
             {
                 if (!_eventStore.Get(booking.EventId, out evnt))
@@ -100,19 +101,23 @@ namespace EventApi.Application.Bookings
             }
             catch (Exception ex)
             {
-                booking.Reject();
-                _bookingStore.Update(booking.Id, booking);
-                _logger.LogError(ex, "При обработке бронирования {BookingId} произошла ошибка, бронирование отклонено. ", booking.Id);
-
-                if (evnt != null)
+                if (booking.Status != BookingStatus.Pending)
                 {
-                    evnt.ReleaseSeats();
-                    _eventStore.Update(evnt.Id, evnt);
-                    _logger.LogError(ex, "Место в событии {EventId} возвращено в доступные.", booking.EventId);
+                    booking.Reject();
+                    _bookingStore.Update(booking.Id, booking);
+                    _logger.LogError(ex, "При обработке бронирования {BookingId} произошла ошибка, бронирование отклонено.", booking.Id);
                 }
+
+                needReleaseSeats = true;
             }
             finally
             {
+                if (needReleaseSeats && evnt != null)
+                {
+                    evnt.ReleaseSeats();
+                    _eventStore.Update(evnt.Id, evnt);
+                }
+
                 _processingSemaphore.Release();
             }
         }
