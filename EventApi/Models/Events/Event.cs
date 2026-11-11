@@ -9,15 +9,15 @@ namespace EventApi.Models.Events
         public string? Description { get; private set; }
         public DateTime? StartAt { get; private set; }
         public DateTime? EndAt { get; private set; }
-        public int TotalSeats { get; private set; }
+        private int totalSeats;
+        public int TotalSeats { get => totalSeats; private set => totalSeats = value; }
         private int availableSeats;
         public int AvailableSeats { get => availableSeats; private set => availableSeats = value; }
-        private static readonly object _locker = new();
 
         private Event() { Title = string.Empty; }
 
         // Фабричный метод создания/инициализации
-        public static Event Create(string title, string? description = null, DateTime? startAt = null, DateTime? endAt = null, int totalSeats = 0, bool withValidation = true)
+        public static Event Create(string title, string? description, DateTime? startAt, DateTime? endAt, int? totalSeats, bool withValidation = true)
         {
             if (withValidation)
                 ValidateParams(null, title, description, startAt, endAt, totalSeats);
@@ -29,31 +29,27 @@ namespace EventApi.Models.Events
                 Description = description,
                 StartAt = startAt,
                 EndAt = endAt,
-                TotalSeats = totalSeats,
-                AvailableSeats = totalSeats
+                TotalSeats = totalSeats.Value, // totalSeats здесь не может быть null, т.к. ValidateParams() раньше выбросит исключение
+                AvailableSeats = totalSeats.Value
             };
             return evnt;
         }
 
         public Event Update(string title, string? description = null, DateTime? startAt = null, DateTime? endAt = null, int? totalSeats = null, bool withValidation = true)
         {
-            // Используем lock, т.к. невозможно гарантировать без критической секции синхронное изменение пары значений TotalSeats и AvailableSeats
-            lock (_locker)
+            if (withValidation)
+                ValidateParams(this, title, description, startAt, endAt, totalSeats);
+
+            this.Title = title;
+            this.Description = description;
+            this.StartAt = startAt;
+            this.EndAt = endAt;
+
+            if (totalSeats != null && totalSeats != this.TotalSeats)
             {
-                if (withValidation)
-                    ValidateParams(this, title, description, startAt, endAt, totalSeats);
-
-                this.Title = title;
-                this.Description = description;
-                this.StartAt = startAt;
-                this.EndAt = endAt;
-
-                if (totalSeats != null && totalSeats != this.TotalSeats)
-                {
-                    int deltaSeats = totalSeats.Value - this.TotalSeats;
-                    this.TotalSeats = totalSeats.Value;
-                    this.AvailableSeats += deltaSeats;
-                }
+                int deltaSeats = totalSeats.Value - this.TotalSeats;
+                TryResetSeats(ref this.totalSeats, 0, int.MaxValue, totalSeats.Value);
+                TryResetSeats(ref this.availableSeats, 0, this.TotalSeats, this.AvailableSeats + deltaSeats);
             }
 
             return this;
@@ -67,7 +63,14 @@ namespace EventApi.Models.Events
             if (totalSeats <= 0)
                 throw new ValidationException("Общее количество мест должно быть больше 0.");
 
-            // Следующие проверки выполняются только если событие уже создано (через параметр evnt должен передавиться this либо null если объект еще не создан).
+            // Следующие проверки выполняются только если событие еще не создано.
+            if (evnt == null)
+            {
+                if (totalSeats == null)
+                    throw new ValidationException("Общее количество мест должно быть задано.");
+            }
+
+            // Следующие проверки выполняются только если событие уже создано (через параметр evnt должен передаваться this либо null если объект еще не создан).
             if (evnt != null)
             {
                 // По замечанию из ревью 4, блокируем возможность изменить емкость мест события, если она меньше количества уже сделанных бронирований (только если событие уже создано).
@@ -75,6 +78,24 @@ namespace EventApi.Models.Events
                 if (evnt != null && totalSeats < reservedSeats)
                     throw new ValidationException($"Нельзя изменить общее количество мест на значение меньшее, чем уже сделано бронирований ({reservedSeats}).");
             }
+        }
+
+        private void TryResetSeats(ref int storeSeats, int minSeats, int maxSeats, int updatedSeats)
+        {
+            int current, updated;
+
+            do
+            {
+                current = storeSeats;
+
+                if (updatedSeats < minSeats)
+                    updated = minSeats;
+                else if (updatedSeats > maxSeats)
+                    updated = maxSeats;
+                else
+                    updated = updatedSeats;
+            }
+            while (Interlocked.CompareExchange(ref storeSeats, updated, current) != current);
         }
 
         public bool TryReserveSeats(int count = 1)
@@ -94,6 +115,7 @@ namespace EventApi.Models.Events
 
             return true;
         }
+
         public void ReleaseSeats(int count = 1)
         {
             int current, updated;

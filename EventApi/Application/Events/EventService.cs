@@ -17,7 +17,7 @@ namespace EventApi.Application.Events
             _logger = logger;
         }
 
-        public Task<PaginatedResult<EventDto>> GetEventsAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default)
+        public async Task<PaginatedResult<EventDto>> GetEventsAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default)
         {
             var filtered = _eventStore.GetAll().Select(e => new EventDto(e));
 
@@ -46,19 +46,19 @@ namespace EventApi.Application.Events
             int totalItems = filtered.Count();
             int curPageSize = items.Count();
 
-            return Task.FromResult(new PaginatedResult<EventDto>(items, page, curPageSize, totalItems));
+            return new PaginatedResult<EventDto>(items, page, curPageSize, totalItems);
         }
 
-        public Task<Event> GetEventByIdAsync(Guid id, CancellationToken ct = default)
+        public async Task<Event> GetEventByIdAsync(Guid id, CancellationToken ct = default)
         {
             // Добавим для проверки исключение если событие не найдено
             if (!_eventStore.Get(id, out var evnt))
                 throw new EventNotFoundException(string.Format("Событие {0} не найдено.", id));
 
-            return Task.FromResult(evnt);
+            return evnt;
         }
 
-        public Task<EventDto> CreateEventAsync(CreateEventDto dto, CancellationToken ct = default)
+        public async Task<EventDto> CreateEventAsync(CreateEventDto dto, CancellationToken ct = default)
         {
             // Валидация инвариантов перенесена в саму модель.
             var evnt = Event.Create(
@@ -66,19 +66,19 @@ namespace EventApi.Application.Events
                 description: dto.Description,
                 startAt: dto.StartAt,
                 endAt: dto.EndAt,
-                totalSeats: dto.TotalSeats ?? 0,
+                totalSeats: dto.TotalSeats,
                 withValidation: true
             );
 
             _eventStore.Add(evnt);
 
             _logger.LogInformation("Создано событие {EventId}.", evnt.Id);
-            return Task.FromResult(new EventDto(evnt));
+            return new EventDto(evnt);
         }
 
-        public Task<EventDto> UpdateEventAsync(Guid id, CreateEventDto dto, CancellationToken ct = default)
+        public async Task<EventDto> UpdateEventAsync(Guid id, CreateEventDto dto, CancellationToken ct = default)
         {
-            var evnt = GetEventByIdAsync(id).Result;
+            var evnt = await GetEventByIdAsync(id);
 
             // Валидация инвариантов перенесена в саму модель.
             evnt.Update(
@@ -93,17 +93,16 @@ namespace EventApi.Application.Events
             _eventStore.Update(id, evnt);
 
             _logger.LogInformation("Обновлено событие {EventId}.", evnt.Id);
-            return Task.FromResult(new EventDto(evnt));
+            return new EventDto(evnt);
         }
 
-        public Task DeleteAsync(Guid id, CancellationToken ct = default)
+        public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var evnt = GetEventByIdAsync(id).Result;
+            var evnt = await GetEventByIdAsync(id);
 
             _eventStore.Remove(id);
 
             _logger.LogInformation("Удалено событие {EventId}.", evnt.Id);
-            return Task.CompletedTask;
         }
     }
 }

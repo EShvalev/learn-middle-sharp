@@ -101,14 +101,14 @@ namespace EventApi.Application.Bookings
             }
             catch (Exception ex)
             {
-                if (booking.Status != BookingStatus.Pending)
+                needReleaseSeats = true;
+
+                if (booking.Status != BookingStatus.Rejected)
                 {
                     booking.Reject();
                     _bookingStore.Update(booking.Id, booking);
                     _logger.LogError(ex, "При обработке бронирования {BookingId} произошла ошибка, бронирование отклонено.", booking.Id);
                 }
-
-                needReleaseSeats = true;
             }
             finally
             {

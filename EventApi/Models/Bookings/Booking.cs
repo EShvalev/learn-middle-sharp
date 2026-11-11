@@ -34,7 +34,7 @@
 
         public void Reject()
         {
-            if (Status != BookingStatus.Pending)
+            if (Status == BookingStatus.Rejected)
                 throw new BookingStatusException(string.Format("Данный переход между статусами бронирования запрещен: текущий {0}, новый {1}.", nameof(Status), nameof(BookingStatus.Rejected)));
 
             Status = BookingStatus.Rejected;

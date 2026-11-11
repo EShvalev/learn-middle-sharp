@@ -33,9 +33,9 @@ namespace EventApi.Application.Bookings
                 if (!evnt.TryReserveSeats())
                     throw new NoAvailableSeatsException("Недостаточно свободных мест для этого бронирования");
 
-                // На самом деле этот вызов (сохранение события) не нужен, т.к. поле AvailableSeats уже обновлено при успешном вызове TryReserveSeats(), а другие поля события здесь не меняются.
+                // Вызов _eventService.UpdateEventAsync (сохранение события) здесь не нужен, т.к. поле AvailableSeats уже обновлено при вызове TryReserveSeats(), а другие поля события здесь не меняются.
                 // Данный вызов будет нужен, когда хранилище событий в памяти будет заменено на репозиторий, работающий с БД.
-                _eventService.UpdateEventAsync(eventId, new CreateEventDto(evnt), ct);
+                //_eventService.UpdateEventAsync(eventId, new CreateEventDto(evnt), ct);
 
                 booking = Booking.Create(eventId);
                 _bookingStore.Add(booking);
@@ -45,14 +45,14 @@ namespace EventApi.Application.Bookings
             return new BookingDto(booking);
         }
 
-        public Task<BookingDto> ConfirmBookingAsync(Guid id, CancellationToken ct = default)
+        public async Task<BookingDto> ConfirmBookingAsync(Guid id, CancellationToken ct = default)
         {
             var booking = GetBookingById(id);
 
             booking.Confirm();
             _bookingStore.Update(booking.Id, booking);
 
-            return Task.FromResult(new BookingDto(booking));
+            return new BookingDto(booking);
         }
 
         public async Task<BookingDto> RejectBookingAsync(Guid id, CancellationToken ct = default)
@@ -67,9 +67,9 @@ namespace EventApi.Application.Bookings
 
                 evnt.ReleaseSeats();
 
-                // На самом деле этот вызов (сохранение события) не нужен, т.к. поле AvailableSeats уже обновлено при вызове ReleaseSeats(), а другие поля события здесь не меняются.
+                // Вызов _eventService.UpdateEventAsync (сохранение события) здесь не нужен, т.к. поле AvailableSeats уже обновлено при вызове ReleaseSeats(), а другие поля события здесь не меняются.
                 // Данный вызов будет нужен, когда хранилище событий в памяти будет заменено на репозиторий, работающий с БД.
-                _eventService.UpdateEventAsync(booking.EventId, new CreateEventDto(evnt), ct);
+                //_eventService.UpdateEventAsync(booking.EventId, new CreateEventDto(evnt), ct);
             }
 
             return new BookingDto(booking);

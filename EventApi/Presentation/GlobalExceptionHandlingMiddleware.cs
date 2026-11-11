@@ -50,8 +50,9 @@ namespace EventApi.Presentation
                 return;
             }
 
+            var contentType = "application/problem+json";
             httpContext.Response.StatusCode = statusCode;
-            httpContext.Response.ContentType = "application/problem+json";
+            httpContext.Response.ContentType = contentType;
 
             var error = new ProblemDetails
             {
@@ -59,7 +60,7 @@ namespace EventApi.Presentation
                 Detail = ex.Message
             };
 
-            await httpContext.Response.WriteAsJsonAsync(error);
+            await httpContext.Response.WriteAsJsonAsync(error, error.GetType(), System.Text.Json.JsonSerializerOptions.Default, contentType);
         }
 
         private static int MapStatusCode(Exception ex)
