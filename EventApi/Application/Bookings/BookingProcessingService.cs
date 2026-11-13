@@ -1,20 +1,26 @@
-﻿using EventApi.Models.Bookings;
+﻿using EventApi.Application.Events;
+using EventApi.Models.Events;
+using EventApi.Models.Bookings;
 
 namespace EventApi.Application.Bookings
 {
     public class BookingProcessingService : BackgroundService
     {
-        private readonly IBookingStore _store;
+        private readonly IEventStore _eventStore;
+        private readonly IBookingStore _bookingStore;
         private readonly ILogger<BookingProcessingService> _logger;
         private readonly TimeSpan _timerPeriod = TimeSpan.FromSeconds(5);
-        const int _taskDelay = 2000;
+        private readonly int _processingDelay = 2000;
+        private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
         public BookingProcessingService(
-            IBookingStore store,
+            IEventStore eventStore,
+            IBookingStore bookingStore,
             ILogger<BookingProcessingService> logger
             )
         {
-            _store = store;
+            _eventStore = eventStore;
+            _bookingStore = bookingStore;
             _logger = logger;
         }
 
@@ -55,7 +61,7 @@ namespace EventApi.Application.Bookings
 
         private async Task ProcessBookings(CancellationToken ct)
         {
-            var pending = _store.GetAll()
+            var pending = _bookingStore.GetAll()
                 .Where(booking => booking.Status == BookingStatus.Pending).ToList<Booking>();
             var tasks = pending
                 .Select(booking => ProcessBookingAsync(booking, ct)).ToList();
@@ -66,10 +72,54 @@ namespace EventApi.Application.Bookings
         private async Task ProcessBookingAsync(Booking booking, CancellationToken ct)
         {
             // Имитируем задержку
-            await Task.Delay(_taskDelay, ct);
+            await Task.Delay(_processingDelay, ct);
 
-            booking.Confirm();
-            _logger.LogInformation("Бронирование {0} подтверждено.", booking.Id);
+            // Семафор входит в асинхронное ожидание
+            await _processingSemaphore.WaitAsync(ct);
+
+            Event? evnt = null;
+            bool needReleaseSeats = false;
+            try
+            {
+                if (!_eventStore.Get(booking.EventId, out evnt))
+                {
+                    booking.Reject();
+                    _bookingStore.Update(booking.Id, booking);
+                    _logger.LogWarning("[{Timestamp}]: Событие {EventId} не найдено, бронирование {BookingId} отклонено.", DateTime.Now, booking.EventId, booking.Id);
+                }
+                else
+                {
+                    booking.Confirm();
+                    _bookingStore.Update(booking.Id, booking);
+                    _logger.LogInformation("[{Timestamp}]: Бронирование {BookingId} подтверждено.", DateTime.Now, booking.Id);
+                }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                _logger.LogInformation("Во время бронирования сработало прерывание операции.");
+                throw; // Пробрасываем наверх, чтобы обработки выше корректно завершился
+            }
+            catch (Exception ex)
+            {
+                needReleaseSeats = true;
+
+                if (booking.Status != BookingStatus.Rejected)
+                {
+                    booking.Reject();
+                    _bookingStore.Update(booking.Id, booking);
+                    _logger.LogError(ex, "При обработке бронирования {BookingId} произошла ошибка, бронирование отклонено.", booking.Id);
+                }
+            }
+            finally
+            {
+                if (needReleaseSeats && evnt != null)
+                {
+                    evnt.ReleaseSeats();
+                    _eventStore.Update(evnt.Id, evnt);
+                }
+
+                _processingSemaphore.Release();
+            }
         }
     }
 }

@@ -4,10 +4,10 @@ namespace EventApi.Application.Events
 {
     public interface IEventService
     {
-        public PaginatedResult<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize);
-        public Event GetById(Guid id);
-        public Guid Create(Event evnt);
-        public Event Update(Guid id, Event newevnt);
-        public void Delete(Guid id);
+        public Task<PaginatedResult<EventDto>> GetEventsAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct);
+        public Task<Event> GetEventByIdAsync(Guid id, CancellationToken ct);
+        public Task<EventDto> CreateEventAsync(CreateEventDto dto, CancellationToken ct);
+        public Task<EventDto> UpdateEventAsync(Guid id, CreateEventDto dto, CancellationToken ct);
+        public Task DeleteAsync(Guid id, CancellationToken ct);
     }
 }

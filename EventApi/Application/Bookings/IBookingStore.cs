@@ -6,6 +6,7 @@ namespace EventApi.Application.Bookings
     {
         public void Add(Booking booking);
         public bool Get(Guid id, out Booking booking);
+        public bool Update(Guid id, Booking booking);
         public IEnumerable<Booking> GetAll();
     }
 }

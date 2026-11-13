@@ -6,10 +6,12 @@
         public Guid EventId { get; init; }
         public BookingStatus Status { get; private set; }
         public DateTime CreatedAt { get; init; }
-        public DateTime? ProcessedAt { get; set; }
+        public DateTime? ProcessedAt { get; private set; }
+
+        private Booking() { }
 
         // Фабричный метод создания/инициализации
-        public static Booking CreatePending(Guid eventId)
+        public static Booking Create(Guid eventId)
         {
             var booking = new Booking()
             {
@@ -32,7 +34,7 @@
 
         public void Reject()
         {
-            if (Status != BookingStatus.Pending)
+            if (Status == BookingStatus.Rejected)
                 throw new BookingStatusException(string.Format("Данный переход между статусами бронирования запрещен: текущий {0}, новый {1}.", nameof(Status), nameof(BookingStatus.Rejected)));
 
             Status = BookingStatus.Rejected;

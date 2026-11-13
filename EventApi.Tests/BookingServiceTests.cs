@@ -13,15 +13,19 @@ namespace EventApi.Tests
         private readonly IBookingService _bookingService;
         private readonly IEventService _eventService;
         private readonly IHostedService _bookingProcessingService;
-        private Guid _zeroGuid = Guid.Parse("00000000-0000-0000-0000-000000000000");
-        private Guid _testGuid = Guid.Parse("00000002-0000-0000-0000-000000000000");
-        private Guid _testGuidToDelete = Guid.Parse("00000005-0000-0000-0000-000000000000");
+        private readonly Guid _zeroGuid;
+        private readonly Guid _testGuid;
+        private readonly Guid _testGuidToDelete;
 
         public BookingServiceTests(EventApiFixture fixture)
         {
             _bookingStore = fixture.bookingStore;
             _bookingService = fixture.bookingService;
             _eventService = fixture.eventService;
+
+            _zeroGuid = fixture.zeroGuid;
+            _testGuid = fixture.testEventGuid;
+            _testGuidToDelete = fixture.testEventGuidToDelete;
 
             _bookingProcessingService = fixture.bookingProcessingService;
         }
@@ -30,7 +34,7 @@ namespace EventApi.Tests
         public async Task CreateBooking_ExistingEvent_ReturnsId()
         {
             // Arrange
-            var evnt = _eventService.GetById(_testGuid);
+            var evnt = await _eventService.GetEventByIdAsync(_testGuid, CancellationToken.None);
 
             // Act
             var booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
@@ -43,7 +47,7 @@ namespace EventApi.Tests
         public async Task CreateBooking_JustAfterCreating_ReturnsCorrectState()
         {
             // Arrange
-            var evnt = _eventService.GetById(_testGuid);
+            var evnt = await _eventService.GetEventByIdAsync(_testGuid, CancellationToken.None);
 
             // Act
             var booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
@@ -56,24 +60,35 @@ namespace EventApi.Tests
         public async Task CreateBooking_AfterProcessingByBPS_ReturnsCorrectState()
         {
             // Arrange
-            var evnt = _eventService.GetById(_testGuid);
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var evnt = await _eventService.GetEventByIdAsync(_testGuid, CancellationToken.None);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20)); // предельное время цикла, чтобы не зависал бескоонечно если что не так
             using var taskBPS = _bookingProcessingService.StartAsync(cts.Token);
 
             // Act
-            var booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
-            await Task.Delay(7000); // ждем 7 сек = 5+2 (тик таймера + задержка обработки)
-            cts.Cancel();
+            BookingDto booking_before_processing = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
+            BookingDto booking_after_processing = booking_before_processing;
+
+            while (!cts.Token.IsCancellationRequested)
+            {
+                await Task.Delay(7000); // на каждой итерации ждем 7 сек = 5+2 (тик BPS таймера + задержка обработки)
+                booking_after_processing = await _bookingService.GetBookingByIdAsync(booking_before_processing.Id, CancellationToken.None);
+
+                // Если статус брони изменился (не начальный), выходим из цикла через cts.Cancel (он же остановливает фоновый BPS)
+                if (booking_after_processing.Status != BookingStatus.Pending)
+                    cts.Cancel();
+            }
+            ;
 
             // Assert
-            Assert.Equal(BookingStatus.Confirmed, booking.Status);
+            Assert.Equal(BookingStatus.Pending, booking_before_processing.Status);
+            Assert.Equal(BookingStatus.Confirmed, booking_after_processing.Status);
         }
 
         [Fact]
         public async Task CreateSeveralBookings_ExistingEvent_ReturnsUniqueIds()
         {
             // Arrange
-            var evnt = _eventService.GetById(_testGuid);
+            var evnt = await _eventService.GetEventByIdAsync(_testGuid, CancellationToken.None);
             int count = 5;
             HashSet<Guid> ids = new HashSet<Guid>();
 
@@ -93,7 +108,7 @@ namespace EventApi.Tests
         public async Task GetBookingById_AfterCreating_ReturnsCorrectInfo()
         {
             // Arrange
-            var evnt = _eventService.GetById(_testGuid);
+            var evnt = await _eventService.GetEventByIdAsync(_testGuid, CancellationToken.None);
             var expected = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
 
             // Act
@@ -105,42 +120,6 @@ namespace EventApi.Tests
             // Сразу после создания статус должен быть Pending, поле ProcessedAt не заполнено
             Assert.Null(booking.ProcessedAt);
             Assert.Equal(BookingStatus.Pending, booking.Status);
-        }
-
-        [Fact]
-        public async Task GetBookingById_AfterConfirming_ReturnsCorrectStatus()
-        {
-            // Arrange
-            var evnt = _eventService.GetById(_testGuid);
-            var expected = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
-
-            // Act
-            var booking = await _bookingService.GetBookingByIdAsync(expected.Id, CancellationToken.None);
-            booking.Confirm();
-
-            // Assert
-            Assert.Equal(expected.Id, booking.Id);
-            // После подтверждения статус должен быть Confirmed, поле ProcessedAt заполнено
-            Assert.Equal(BookingStatus.Confirmed, booking.Status);
-            Assert.NotNull(booking.ProcessedAt);
-        }
-
-        [Fact]
-        public async Task GetBookingById_AfterRejecting_ReturnsCorrectStatus()
-        {
-            // Arrange
-            var evnt = _eventService.GetById(_testGuid);
-            var expected = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
-
-            // Act
-            var booking = await _bookingService.GetBookingByIdAsync(expected.Id, CancellationToken.None);
-            booking.Reject();
-
-            // Assert
-            Assert.Equal(expected.Id, booking.Id);
-            // После отмены статус должен быть Rejected, поле ProcessedAt заполнено
-            Assert.Equal(BookingStatus.Rejected, booking.Status);
-            Assert.NotNull(booking.ProcessedAt);
         }
 
         [Fact]
@@ -178,7 +157,7 @@ namespace EventApi.Tests
             // Act & Assert
             var exception = await Assert.ThrowsAsync<EventNotFoundException>(async () =>
             {
-                _eventService.Delete(eventId);
+                await _eventService.DeleteAsync(eventId, CancellationToken.None);
                 await _bookingService.CreateBookingAsync(eventId, CancellationToken.None);
             });
 
@@ -191,7 +170,7 @@ namespace EventApi.Tests
         {
             // Arrange
             var eventId = _testGuid;
-            var expected = Booking.CreatePending(_testGuid);
+            var expected = Booking.Create(_testGuid);
 
             // Act
             _bookingStore.Add(expected);
@@ -208,7 +187,7 @@ namespace EventApi.Tests
             var eventId = _testGuid;
 
             // Act
-            var booking = Booking.CreatePending(_testGuid);
+            var booking = Booking.Create(_testGuid);
 
             // Assert
             Assert.Equal(BookingStatus.Pending, booking.Status);
@@ -222,7 +201,7 @@ namespace EventApi.Tests
             var eventId = _testGuid;
 
             // Act
-            var booking = Booking.CreatePending(_testGuid);
+            var booking = Booking.Create(_testGuid);
             booking.Confirm();
 
             // Assert

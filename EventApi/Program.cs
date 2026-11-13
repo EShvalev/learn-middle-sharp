@@ -15,9 +15,7 @@ public class Program
         builder.Services.AddControllers()
             .ConfigureApiBehaviorOptions(options =>
             {
-                // Оставляем автоматическую проверку валидации, настраиваем только единый формат ошибки + логирование.
-                //options.SuppressModelStateInvalidFilter = true;
-
+                // Оставляем автоматическую проверку валидации (options.SuppressModelStateInvalidFilter = true), настраиваем только единый формат ошибки + логирование.
                 options.InvalidModelStateResponseFactory = context =>
                 {
                     var errors = context.ModelState
@@ -31,15 +29,15 @@ public class Program
 
                     var errorsString = string.Join(Environment.NewLine, errors.Select(kv => $"{kv.Key}: {kv.Value}"));
 
-                    logger.LogError($"Ошибка валидации: {errorsString}");
+                    logger.LogError("Ошибка валидации: {errors}", errorsString);
 
                     var customResponse = new ProblemDetails
                     {
-                        Status = StatusCodes.Status422UnprocessableEntity,
+                        Status = StatusCodes.Status400BadRequest,
                         Detail = errorsString
                     };
 
-                    return new UnprocessableEntityObjectResult(customResponse);
+                    return new BadRequestObjectResult(customResponse);
                 };
             });
 

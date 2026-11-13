@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using EventApi.Models.Events;
 
-namespace EventApi.Models.Events
+namespace EventApi.Application.Events
 {
     public class EventDto
     {
@@ -9,8 +9,8 @@ namespace EventApi.Models.Events
         public string? Description { get; set; }
         public DateTime? StartAt { get; set; }
         public DateTime? EndAt { get; set; }
-
-        public EventDto() { Title = string.Empty; }
+        public int TotalSeats { get; set; }
+        public int AvailableSeats { get; set; }
 
         public EventDto(Event evnt)
         {
@@ -19,6 +19,8 @@ namespace EventApi.Models.Events
             Description = evnt.Description;
             StartAt = evnt.StartAt;
             EndAt = evnt.EndAt;
+            TotalSeats = evnt.TotalSeats;
+            AvailableSeats = evnt.AvailableSeats;
         }
     }
 }

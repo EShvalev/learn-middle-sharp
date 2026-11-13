@@ -7,84 +7,87 @@ namespace EventApi.Tests
     public class EventServiceTests : IClassFixture<EventApiFixture>
     {
         private readonly IEventService _eventService;
-        private Guid _zeroGuid = Guid.Parse("00000000-0000-0000-0000-000000000000");
-        private Guid _testGuid = Guid.Parse("00000005-0000-0000-0000-000000000000");
-        private Guid _testGuidToDelete = Guid.Parse("00000001-0000-0000-0000-000000000000");
+        private readonly Guid _zeroGuid;
+        private readonly Guid _testGuid;
+        private readonly Guid _testGuidToDelete;
         private readonly int _VeryLongPageSize = 1000000;
 
         public EventServiceTests(EventApiFixture fixture)
         {
             _eventService = fixture.eventService;
+            _zeroGuid = fixture.zeroGuid;
+            _testGuid = fixture.testEventGuid;
+            _testGuidToDelete = fixture.testEventGuidToDelete;
         }
 
         [Fact]
-        public void GetEvents_AllOnSinglePage_ReturnsExpectedCount()
+        public async Task GetEvents_AllOnSinglePage_ReturnsExpectedCount()
         {
             // Arrange
             var pageSize = _VeryLongPageSize; // заведомо большой размер страницы, чтобы пагинация не применялась
 
             // Act
-            var result = _eventService.GetEvents(null, null, null, 1, pageSize);
+            var result = await _eventService.GetEventsAsync(null, null, null, 1, pageSize, CancellationToken.None);
 
             // Assert
             Assert.Equal(result.TotalItems, result.Items.Count());
         }
 
         [Fact]
-        public void GetEventById_IfExists_ReturnsNotNull()
+        public async Task GetEventById_IfExists_ReturnsNotNull()
         {
             // Arrange
             var id = _testGuid;
 
             // Act
-            var result = _eventService.GetById(id);
+            var result = await _eventService.GetEventByIdAsync(id, CancellationToken.None);
 
             // Assert
             Assert.NotNull(result);
         }
 
         [Fact]
-        public void GetEventById_IfNotExists_ThrowsEventNotFoundExeption()
+        public async Task GetEventById_IfNotExists_ThrowsEventNotFoundException()
         {
             // Arrange
             var id = _zeroGuid;
 
             // Act & Assert
-            Assert.Throws<EventNotFoundException>(() => _eventService.GetById(id));
+            await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.GetEventByIdAsync(id, CancellationToken.None));
         }
 
         [Fact]
-        public void CreateEvent_OneEvent_ReturnsId()
+        public async Task CreateEvent_OneEvent_ReturnsId()
         {
             // Arrange
-            var evnt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
+            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
 
             // Act
-            var id = _eventService.Create(evnt);
+            var dto = await _eventService.CreateEventAsync(evnt, CancellationToken.None);
 
             // Assert
-            Assert.True(id != _zeroGuid);
+            Assert.True(dto.Id != _zeroGuid);
         }
 
         [Fact]
-        public void CreateEvent_IfDateInvalid_ThrowsValidationExeption()
+        public async Task CreateEvent_IfDateInvalid_ThrowsValidationException()
         {
             // Arrange
-            var evnt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
+            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02"), TotalSeats = 200 };
 
             // Act & Assert
-            Assert.Throws<ValidationException>(() => _eventService.Create(evnt));
+            await Assert.ThrowsAsync<ValidationException>(() => _eventService.CreateEventAsync(evnt, CancellationToken.None));
         }
 
         [Fact]
-        public void UpdateEvent_IfExists_ReturnsUpdated()
+        public async Task UpdateEvent_IfExists_ReturnsUpdated()
         {
             // Arrange
-            var expected = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
+            var expected = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
             var id = _testGuid;
 
             // Act
-            var result = _eventService.Update(id, expected);
+            var result = await _eventService.UpdateEventAsync(id, expected, CancellationToken.None);
 
             // Assert
             Assert.NotNull(result);
@@ -95,37 +98,37 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public void UpdateEvent_IfNotExists_ThrowsEventNotFoundExeption()
+        public async Task UpdateEvent_IfNotExists_ThrowsEventNotFoundException()
         {
             // Arrange
-            var envt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05") };
+            var envt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
             var id = _zeroGuid;
 
             // Act & Assert
-            Assert.Throws<EventNotFoundException>(() => _eventService.Update(_zeroGuid, envt));
+            await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.UpdateEventAsync(_zeroGuid, envt, CancellationToken.None));
         }
 
         [Fact]
-        public void UpdateEvent_IfDateInvalid_ThrowsValidationExeption()
+        public async Task UpdateEvent_IfDateInvalid_ThrowsValidationException()
         {
             // Arrange
-            var evnt = new Event() { Id = Guid.NewGuid(), Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02") };
-            var id = _zeroGuid;
+            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02"), TotalSeats = 200 };
+            var id = _testGuid;
 
             // Act & Assert
-            Assert.Throws<ValidationException>(() => _eventService.Update(id, evnt));
+            await Assert.ThrowsAsync<ValidationException>(() => _eventService.UpdateEventAsync(id, evnt, CancellationToken.None));
         }
 
         [Fact]
-        public void DeleteEvent_IfExists_DoesNotContainEventWithDeletedId()
+        public async Task DeleteEvent_IfExists_DoesNotContainEventWithDeletedId()
         {
             // Arrange
             var id = _testGuidToDelete;
             var pageSize = _VeryLongPageSize; // заведомо большой размер страницы, чтобы пагинация не применялась
 
             // Act
-            _eventService.Delete(id);
-            var result = _eventService.GetEvents(null, null, null, 1, pageSize);
+            await _eventService.DeleteAsync(id, CancellationToken.None);
+            var result = await _eventService.GetEventsAsync(null, null, null, 1, pageSize, CancellationToken.None);
 
             // Assert
             Assert.DoesNotContain(id, result.Items.Select(e => e.Id));

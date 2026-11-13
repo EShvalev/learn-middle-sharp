@@ -32,22 +32,27 @@ namespace EventApi.Presentation
 
         private async Task HandleException(HttpContext httpContext, Exception ex)
         {
-            _logger.LogError(
-                ex,
-                "Unhandled exception. Method={Method}, Path={Path}, RequestId={RequestId}",
-                httpContext.Request.Method,
-                httpContext.Request.Path,
-                httpContext.Request.Headers["x-request-id"]);
+            var statusCode = MapStatusCode(ex);
+
+            // Логируем только 500 ошибки (учел замечание ревью по спринту 4)
+            if (statusCode == StatusCodes.Status500InternalServerError)
+            {
+                _logger.LogError(
+                    ex,
+                    "Unhandled exception. Method={Method}, Path={Path}, RequestId={RequestId}",
+                    httpContext.Request.Method,
+                    httpContext.Request.Path,
+                    httpContext.Request.Headers["x-request-id"]);
+            }
 
             if (httpContext.Response.HasStarted)
             {
                 return;
             }
 
-            var statusCode = MapStatusCode(ex);
-
+            var contentType = "application/problem+json";
             httpContext.Response.StatusCode = statusCode;
-            httpContext.Response.ContentType = "application/json";
+            httpContext.Response.ContentType = contentType;
 
             var error = new ProblemDetails
             {
@@ -55,7 +60,7 @@ namespace EventApi.Presentation
                 Detail = ex.Message
             };
 
-            await httpContext.Response.WriteAsJsonAsync(error);
+            await httpContext.Response.WriteAsJsonAsync(error, error.GetType(), System.Text.Json.JsonSerializerOptions.Default, contentType);
         }
 
         private static int MapStatusCode(Exception ex)
@@ -64,7 +69,8 @@ namespace EventApi.Presentation
                 BookingStatusException bse => StatusCodes.Status400BadRequest,
                 BookingNotFoundException nfe => StatusCodes.Status404NotFound,
                 EventNotFoundException nfe => StatusCodes.Status404NotFound,
-                ValidationException ve => StatusCodes.Status422UnprocessableEntity,
+                ValidationException ve => StatusCodes.Status400BadRequest,
+                NoAvailableSeatsException nas => StatusCodes.Status409Conflict,
                 _ => StatusCodes.Status500InternalServerError
             };
     }

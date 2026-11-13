@@ -1,4 +1,4 @@
-﻿namespace EventApi.Models.Events
+﻿namespace EventApi.Presentation.Events
 {
     public class EventCreateResponse
     {
