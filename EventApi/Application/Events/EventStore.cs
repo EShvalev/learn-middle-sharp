@@ -5,28 +5,40 @@ namespace EventApi.Application.Events
 {
     public class EventStore : IEventStore
     {
-        private readonly ConcurrentDictionary<Guid, Event> _dict = new ConcurrentDictionary<Guid, Event>();
+        private readonly ConcurrentDictionary<Guid, Event> _events = new ConcurrentDictionary<Guid, Event>();
 
-        public void Add(Event evnt)
+        public async Task CreateAsync(Event evnt, CancellationToken ct = default)
         {
-            _dict[evnt.Id] = evnt;
+            ArgumentNullException.ThrowIfNull(evnt);
+
+            if (!_events.TryAdd(evnt.Id, evnt.Clone()))
+            {
+                throw new InvalidOperationException($"Событие с ID {evnt.Id} уже существует.");
+            }
         }
 
-        public bool Get(Guid id, out Event evnt)
+        public async Task<Event?> GetByIdAsync(Guid id, CancellationToken ct = default)
         {
-            return _dict.TryGetValue(id, out evnt);
+            return _events.TryGetValue(id, out var evnt) ? evnt.Clone() : null;
         }
 
-        public bool Remove(Guid id)
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            return _dict.TryRemove(id, out var _);
+            if (!_events.TryGetValue(id, out var evnt))
+                throw new EventNotFoundException($"Событие {id} не найдено.");
+            return _events.TryRemove(id, out var _);
         }
 
-        public bool Update(Guid id, Event evnt)
+        public async Task UpdateAsync(Guid id, Event evnt, CancellationToken ct = default)
         {
-            return Get(id, out var orig_evnt) ? _dict.TryUpdate(id, evnt, orig_evnt) : false;
+            ArgumentNullException.ThrowIfNull(evnt);
+
+            if (!_events.TryGetValue(id, out var _))
+                throw new EventNotFoundException($"Событие {id} не найдено.");
+
+            _events[id] = evnt.Clone();
         }
 
-        public IEnumerable<Event> GetAll() => _dict.Values.OrderBy(e => e.Id);
+        public async Task<IEnumerable<Event>> GetAllAsync(CancellationToken ct = default) => _events.Values.Select(e => e.Clone()).OrderBy(e => e.Id);
     }
 }

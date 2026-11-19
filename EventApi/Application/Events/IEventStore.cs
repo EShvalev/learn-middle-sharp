@@ -4,10 +4,10 @@ namespace EventApi.Application.Events
 {
     public interface IEventStore
     {
-        public void Add(Event evnt);
-        public bool Get(Guid id, out Event evnt);
-        public bool Remove(Guid id);
-        public bool Update(Guid id, Event evnt);
-        public IEnumerable<Event> GetAll();
+        public Task CreateAsync(Event evnt, CancellationToken ct);
+        public Task<Event?> GetByIdAsync(Guid id, CancellationToken ct);
+        public Task<bool> DeleteAsync(Guid id, CancellationToken ct);
+        public Task UpdateAsync(Guid id, Event evnt, CancellationToken ct);
+        public Task<IEnumerable<Event>> GetAllAsync(CancellationToken ct);
     }
 }

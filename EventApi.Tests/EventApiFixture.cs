@@ -1,4 +1,5 @@
-﻿using EventApi.Application.Bookings;
+﻿using EventApi.Application;
+using EventApi.Application.Bookings;
 using EventApi.Application.Events;
 using EventApi.Models.Events;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +15,7 @@ namespace EventApi.Tests
 
     public class EventApiFixture
     {
+        public IKeyedLockManager lockManager { get; set; }
         public IBookingStore bookingStore { get; set; }
         public IBookingService bookingService { get; set; }
         public IEventStore eventStore { get; set; }
@@ -43,13 +45,12 @@ namespace EventApi.Tests
 
         public EventApiFixture()
         {
+            // Создаем основные объекты тестирования с учетом их зависимостей
+            lockManager = new KeyedLockManager();
             eventStore = new EventStore();
-
-            eventService = new EventService(eventStore, NullLogger<EventService>.Instance);
-
+            eventService = new EventService(lockManager, eventStore, NullLogger<EventService>.Instance);
             bookingStore = new InMemoryBookingStore();
-
-            bookingService = new BookingService(eventService, bookingStore, NullLogger<BookingService>.Instance);
+            bookingService = new BookingService(lockManager, eventStore, bookingStore, NullLogger<BookingService>.Instance);
 
             // Предзаполним список события в сервисе для тестирования выборок и пагинаций
             InitEvents(eventService);
@@ -72,7 +73,7 @@ namespace EventApi.Tests
             var factory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
             loggerBPS = factory.CreateLogger<BookingProcessingService>();
-            bookingProcessingService = new BookingProcessingService(eventStore, bookingStore, loggerBPS);
+            bookingProcessingService = new BookingProcessingService(lockManager, eventStore, bookingStore, loggerBPS);
 
             Console.WriteLine("EventApiFixture() constructor called.");
         }
@@ -87,7 +88,8 @@ namespace EventApi.Tests
 
         private Guid GetEventIdByTitle(string title)
         {
-            var evnt = eventStore.GetAll().FirstOrDefault(e => e.Title == title);
+            var events = eventStore.GetAllAsync(CancellationToken.None).Result;
+            var evnt = events.FirstOrDefault(e => e.Title == title);
             return evnt != null ? evnt.Id : zeroGuid;
         }
     }

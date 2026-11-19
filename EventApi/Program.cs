@@ -1,5 +1,6 @@
-using EventApi.Application.Events;
+using EventApi.Application;
 using EventApi.Application.Bookings;
+using EventApi.Application.Events;
 using EventApi.Presentation;
 using Microsoft.AspNetCore.Mvc;
 
@@ -46,6 +47,7 @@ public class Program
         builder.Services.AddSwaggerGen();
 
         // Регистрируем свои сервисы
+        builder.Services.AddSingleton<IKeyedLockManager, KeyedLockManager>();
         builder.Services.AddSingleton<IEventStore, EventStore>();
         builder.Services.AddSingleton<IBookingStore, InMemoryBookingStore>();
         builder.Services.AddScoped<IEventService, EventService>();

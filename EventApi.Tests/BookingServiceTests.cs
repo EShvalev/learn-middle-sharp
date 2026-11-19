@@ -173,8 +173,8 @@ namespace EventApi.Tests
             var expected = Booking.Create(_testGuid);
 
             // Act
-            _bookingStore.Add(expected);
-            _bookingStore.Get(expected.Id, out var booking);
+            await _bookingStore.CreateAsync(expected, CancellationToken.None);
+            var booking = await _bookingStore.GetByIdAsync(expected.Id, CancellationToken.None);
 
             // Assert
             Assert.Equal(expected.Id, booking.Id);

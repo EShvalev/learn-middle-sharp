@@ -6,23 +6,33 @@ namespace EventApi.Application.Bookings
 {
     public class InMemoryBookingStore : IBookingStore
     {
-        private readonly ConcurrentDictionary<Guid, Booking> _dict = new ConcurrentDictionary<Guid, Booking>();
+        private readonly ConcurrentDictionary<Guid, Booking> _bookings = new ConcurrentDictionary<Guid, Booking>();
 
-        public void Add(Booking booking)
+        public async Task CreateAsync(Booking booking, CancellationToken ct)
         {
-            _dict[booking.Id] = booking;
+            ArgumentNullException.ThrowIfNull(booking);
+
+            if (!_bookings.TryAdd(booking.Id, booking.Clone()))
+            {
+                throw new InvalidOperationException($"Бронирование с ID {booking.Id} уже существует.");
+            }
         }
 
-        public bool Get(Guid id, out Booking booking)
+        public async Task<Booking?> GetByIdAsync(Guid id, CancellationToken ct = default)
         {
-            return _dict.TryGetValue(id, out booking);
+            return _bookings.TryGetValue(id, out var booking) ? booking.Clone() : null;
         }
 
-        public bool Update(Guid id, Booking booking)
+        public async Task UpdateAsync(Guid id, Booking booking, CancellationToken ct = default)
         {
-            return Get(id, out var orig_evnt) ? _dict.TryUpdate(id, booking, orig_evnt) : false;
+            ArgumentNullException.ThrowIfNull(booking);
+
+            if (!_bookings.TryGetValue(id, out var _))
+                throw new EventNotFoundException($"Бронирование {id} не найдено.");
+
+            _bookings[id] = booking.Clone();
         }
 
-        public IEnumerable<Booking> GetAll() => _dict.Values;
+        public async Task<IEnumerable<Booking>> GetAllAsync(CancellationToken ct = default) => _bookings.Values.Select(e => e.Clone());
     }
 }

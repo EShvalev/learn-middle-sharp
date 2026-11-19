@@ -23,6 +23,16 @@
             return booking;
         }
 
+        // Метод Clone(), используется в Get методах для отказа от прямого доступа к элементам хранилища (подготовка к переходу на EF)
+        public Booking Clone() => new()
+        {
+            Id = this.Id,
+            EventId = this.EventId,
+            Status = this.Status,
+            CreatedAt = this.CreatedAt,
+            ProcessedAt = this.ProcessedAt
+        };
+
         public void Confirm()
         {
             if (Status != BookingStatus.Pending)

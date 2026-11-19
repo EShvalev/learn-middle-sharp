@@ -1,12 +1,13 @@
 ﻿using EventApi.Models.Bookings;
+using EventApi.Models.Events;
 
 namespace EventApi.Application.Bookings
 {
     public interface IBookingStore
     {
-        public void Add(Booking booking);
-        public bool Get(Guid id, out Booking booking);
-        public bool Update(Guid id, Booking booking);
-        public IEnumerable<Booking> GetAll();
+        public Task CreateAsync(Booking booking, CancellationToken ct);
+        public Task<Booking?> GetByIdAsync(Guid id, CancellationToken ct);
+        public Task UpdateAsync(Guid id, Booking booking, CancellationToken ct);
+        public Task<IEnumerable<Booking>> GetAllAsync(CancellationToken ct);
     }
 }

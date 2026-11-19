@@ -35,6 +35,18 @@ namespace EventApi.Models.Events
             return evnt;
         }
 
+        // Метод Clone(), используется в Get методах для отказа от прямого доступа к элементам хранилища (подготовка к переходу на EF)
+        public Event Clone() => new()
+        {
+            Id = this.Id,
+            Title = this.Title,
+            Description = this.Description,
+            StartAt = this.StartAt,
+            EndAt = this.EndAt,
+            TotalSeats = this.TotalSeats,
+            AvailableSeats = this.AvailableSeats
+        };
+
         public Event Update(string title, string? description = null, DateTime? startAt = null, DateTime? endAt = null, int? totalSeats = null, bool withValidation = true)
         {
             if (withValidation)
@@ -82,54 +94,78 @@ namespace EventApi.Models.Events
 
         private void TryResetSeats(ref int storeSeats, int minSeats, int maxSeats, int updatedSeats)
         {
-            int current, updated;
+            // 19.11.2026: после добавления KeyLockedManager как сквозного сервиса блокировки убрал CAS вызовы по замечанию "не стоит смешивать два типа блокировок на изменении одного объекта" 
+            // Оставил закомментрованную прежнюю версию до следующего спринта.
+            //int current, updated;
 
-            do
-            {
-                current = storeSeats;
+            //do
+            //{
+            //    current = storeSeats;
 
-                if (updatedSeats < minSeats)
-                    updated = minSeats;
-                else if (updatedSeats > maxSeats)
-                    updated = maxSeats;
-                else
-                    updated = updatedSeats;
-            }
-            while (Interlocked.CompareExchange(ref storeSeats, updated, current) != current);
+            //    if (updatedSeats < minSeats)
+            //        updated = minSeats;
+            //    else if (updatedSeats > maxSeats)
+            //        updated = maxSeats;
+            //    else
+            //        updated = updatedSeats;
+            //}
+            //while (Interlocked.CompareExchange(ref storeSeats, updated, current) != current);
+
+            if (updatedSeats < minSeats)
+                storeSeats = minSeats;
+            else if (updatedSeats > maxSeats)
+                storeSeats = maxSeats;
+            else
+                storeSeats = updatedSeats;
         }
 
         public bool TryReserveSeats(int count = 1)
         {
-            int current, updated;
+            // 19.11.2026: после добавления KeyLockedManager как сквозного сервиса блокировки убрал CAS вызовы по замечанию "не стоит смешивать два типа блокировок на изменении одного объекта" 
+            // Оставил закомментрованную прежнюю версию до следующего спринта.
+            //int current, updated;
 
-            do
-            {
-                current = this.AvailableSeats;
+            //do
+            //{
+            //    current = this.AvailableSeats;
 
-                if (current - count < 0)
-                    return false;
+            //    if (current - count < 0)
+            //        return false;
 
-                updated = current - count;
-            }
-            while (Interlocked.CompareExchange(ref this.availableSeats, updated, current) != current);
+            //    updated = current - count;
+            //}
+            //while (Interlocked.CompareExchange(ref this.availableSeats, updated, current) != current);
+
+            if (this.availableSeats < count)
+                return false;
+
+            this.AvailableSeats -= count;
 
             return true;
         }
 
         public void ReleaseSeats(int count = 1)
         {
-            int current, updated;
+            // 19.11.2026: после добавления KeyLockedManager как сквозного сервиса блокировки убрал CAS вызовы по замечанию "не стоит смешивать два типа блокировок на изменении одного объекта" 
+            // Оставил закомментрованную прежнюю версию до следующего спринта.
+            //int current, updated;
 
-            do
-            {
-                current = this.AvailableSeats;
+            //do
+            //{
+            //    current = this.AvailableSeats;
 
-                if (current + count > this.TotalSeats)
-                    return;
+            //    if (current + count > this.TotalSeats)
+            //        return;
 
-                updated = current + count;
-            }
-            while (Interlocked.CompareExchange(ref this.availableSeats, updated, current) != current);
+            //    updated = current + count;
+            //}
+            //while (Interlocked.CompareExchange(ref this.availableSeats, updated, current) != current);
+
+            if (this.totalSeats < this.availableSeats + count)
+                return;
+
+            this.AvailableSeats += count;
+
         }
     }
 }

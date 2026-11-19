@@ -11,8 +11,8 @@ namespace EventApi.Tests
     public class BookingServiceSeatProcTests : IClassFixture<EventApiFixture>
     {
         private readonly IBookingStore _bookingStore;
+        private readonly IEventStore _eventStore;
         private readonly IBookingService _bookingService;
-        private readonly IEventService _eventService;
         private readonly IHostedService _bookingProcessingService;
         private readonly Guid _zeroGuid;
         private readonly Guid _testGuid;
@@ -22,7 +22,7 @@ namespace EventApi.Tests
         {
             _bookingStore = fixture.bookingStore;
             _bookingService = fixture.bookingService;
-            _eventService = fixture.eventService;
+            _eventStore = fixture.eventStore;
 
             _zeroGuid = fixture.zeroGuid;
             _testGuid = fixture.testEventGuid;
@@ -34,7 +34,7 @@ namespace EventApi.Tests
         // Вспомогательный метод для тестов: создает тестовое событие.
         private Event CreateTestEvent(int totalSeats)
         {
-            var createDto = new CreateEventDto()
+            var dto = new CreateEventDto()
             {
                 Title = "Джазовые портреты вокалистов",
                 Description = "Звезды мирового джаза",
@@ -43,10 +43,21 @@ namespace EventApi.Tests
                 TotalSeats = totalSeats
             };
 
-            var dto = _eventService.CreateEventAsync(createDto, CancellationToken.None).Result;
-            var evnt = _eventService.GetEventByIdAsync(dto.Id, CancellationToken.None);
+            var evnt = Event.Create(
+                title: dto.Title,
+                description: dto.Description,
+                startAt: dto.StartAt,
+                endAt: dto.EndAt,
+                totalSeats: dto.TotalSeats,
+                withValidation: true
+            );
 
-            return evnt.Result;
+            _eventStore.CreateAsync(evnt, CancellationToken.None);
+
+            //var dto = _eventService.CreateEventAsync(dto, CancellationToken.None).Result;
+            //var evnt = _eventStore.GetByIdAsync(dto.Id, CancellationToken.None);
+
+            return evnt;
         }
 
         // Вспомогательный метод для тестов: устанавливает заданное TotalSeats.
@@ -71,6 +82,8 @@ namespace EventApi.Tests
 
             // Act
             var booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
+            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
+            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
 
             // Assert
             Assert.Equal(BookingStatus.Pending, booking.Status);
@@ -92,6 +105,8 @@ namespace EventApi.Tests
                 var booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
                 ids.Add(booking.Id);
             }
+            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
+            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
 
             // Assert
             Assert.DoesNotContain(_zeroGuid, ids);
@@ -160,10 +175,14 @@ namespace EventApi.Tests
             // Arrange
             var evnt = CreateTestEvent(totalSeats: 1);
             var expected = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
+            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
+            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
             int expectedSeats = evnt.AvailableSeats + 1; // после отмены брони одно свободное место должно вернуться
 
             // Act
             var booking = await _bookingService.RejectBookingAsync(expected.Id, CancellationToken.None);
+            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
+            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
 
             // Assert
             Assert.Equal(expected.Id, booking.Id);
@@ -211,6 +230,8 @@ namespace EventApi.Tests
             {
                 await Task.WhenAll(allTasks);
             });
+            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
+            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
 
             // Assert
             Assert.Equal(5, allTasks.Where(t => t.IsCompletedSuccessfully).Count());
@@ -241,6 +262,8 @@ namespace EventApi.Tests
             }
 
             await Task.WhenAll(allTasks);
+            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
+            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
 
             // Assert
             Assert.Equal(count, ids.Distinct().Count());

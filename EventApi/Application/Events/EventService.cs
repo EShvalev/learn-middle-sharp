@@ -5,21 +5,24 @@ namespace EventApi.Application.Events
 {
     public class EventService : IEventService
     {
-        private readonly ILogger<EventService> _logger;
+        private readonly IKeyedLockManager _lockManager;
         private readonly IEventStore _eventStore;
+        private readonly ILogger<EventService> _logger;
 
         public EventService(
+            IKeyedLockManager lockManager,
             IEventStore eventStore,
             ILogger<EventService> logger
             )
         {
+            _lockManager = lockManager;
             _eventStore = eventStore;
             _logger = logger;
         }
 
         public async Task<PaginatedResult<EventDto>> GetEventsAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default)
         {
-            var filtered = _eventStore.GetAll().Select(e => new EventDto(e));
+            var filtered = await _eventStore.GetAllAsync(ct);
 
             // Выбрасываем исключение, если pageSize <= 0
             if (pageSize <= 0)
@@ -41,7 +44,8 @@ namespace EventApi.Application.Events
 
             var items = filtered
                 .Skip((page - 1) * pageSize)
-                .Take(pageSize);
+                .Take(pageSize)
+                .Select(e => new EventDto(e));
 
             int totalItems = filtered.Count();
             int curPageSize = items.Count();
@@ -49,13 +53,13 @@ namespace EventApi.Application.Events
             return new PaginatedResult<EventDto>(items, page, curPageSize, totalItems);
         }
 
-        public async Task<Event> GetEventByIdAsync(Guid id, CancellationToken ct = default)
+        public async Task<EventDto> GetEventByIdAsync(Guid id, CancellationToken ct = default)
         {
-            // Добавим для проверки исключение если событие не найдено
-            if (!_eventStore.Get(id, out var evnt))
-                throw new EventNotFoundException(string.Format("Событие {0} не найдено.", id));
+            var evnt = await _eventStore.GetByIdAsync(id, ct);
+            if (evnt == null)
+                throw new EventNotFoundException($"Событие {id} не найдено.");
 
-            return evnt;
+            return new EventDto(evnt);
         }
 
         public async Task<EventDto> CreateEventAsync(CreateEventDto dto, CancellationToken ct = default)
@@ -70,7 +74,7 @@ namespace EventApi.Application.Events
                 withValidation: true
             );
 
-            _eventStore.Add(evnt);
+            await _eventStore.CreateAsync(evnt, ct);
 
             _logger.LogInformation("Создано событие {EventId}.", evnt.Id);
             return new EventDto(evnt);
@@ -78,31 +82,37 @@ namespace EventApi.Application.Events
 
         public async Task<EventDto> UpdateEventAsync(Guid id, CreateEventDto dto, CancellationToken ct = default)
         {
-            var evnt = await GetEventByIdAsync(id);
+            Event? evnt;
 
-            // Валидация инвариантов перенесена в саму модель.
-            evnt.Update(
-                title: dto.Title,
-                description: dto.Description,
-                startAt: dto.StartAt,
-                endAt: dto.EndAt,
-                totalSeats: dto.TotalSeats,
-                withValidation: true
-            );
+            using (await _lockManager.AcquireEventLockAsync(id, ct))
+            {
+                evnt = await _eventStore.GetByIdAsync(id, ct);
+                if (evnt == null)
+                    throw new EventNotFoundException($"Событие {id} не найдено.");
 
-            _eventStore.Update(id, evnt);
+                // Валидация инвариантов перенесена в саму модель.
+                evnt.Update(
+                    title: dto.Title,
+                    description: dto.Description,
+                    startAt: dto.StartAt,
+                    endAt: dto.EndAt,
+                    totalSeats: dto.TotalSeats,
+                    withValidation: true
+                );
 
-            _logger.LogInformation("Обновлено событие {EventId}.", evnt.Id);
+                await _eventStore.UpdateAsync(id, evnt, ct);
+            }
+
+            _logger.LogInformation("Обновлено событие {EventId}.", id);
             return new EventDto(evnt);
         }
 
         public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var evnt = await GetEventByIdAsync(id);
+            bool deleted = await _eventStore.DeleteAsync(id, ct);
 
-            _eventStore.Remove(id);
-
-            _logger.LogInformation("Удалено событие {EventId}.", evnt.Id);
+            if (deleted)
+                _logger.LogInformation("Удалено событие {EventId}.", id);
         }
     }
 }
