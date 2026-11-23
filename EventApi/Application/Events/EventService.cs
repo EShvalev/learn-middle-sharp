@@ -1,28 +1,32 @@
-﻿using EventApi.Models.Events;
+﻿using EventApi.DataAсcess;
+using EventApi.Models.Events;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace EventApi.Application.Events
 {
     public class EventService : IEventService
     {
+        private readonly AppDbContext _dbContext;
         private readonly IKeyedLockManager _lockManager;
-        private readonly IEventStore _eventStore;
         private readonly ILogger<EventService> _logger;
 
         public EventService(
+            AppDbContext dbContext,
             IKeyedLockManager lockManager,
-            IEventStore eventStore,
             ILogger<EventService> logger
             )
         {
+            _dbContext = dbContext;
             _lockManager = lockManager;
-            _eventStore = eventStore;
             _logger = logger;
         }
 
         public async Task<PaginatedResult<EventDto>> GetEventsAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default)
         {
-            var filtered = await _eventStore.GetAllAsync(ct);
+            var filtered = _dbContext.Events
+                .AsNoTracking()
+                .AsQueryable();
 
             // Выбрасываем исключение, если pageSize <= 0
             if (pageSize <= 0)
@@ -42,10 +46,12 @@ namespace EventApi.Application.Events
             if (to.HasValue)
                 filtered = filtered.Where(e => e.EndAt.HasValue && e.EndAt.Value <= to.Value);
 
-            var items = filtered
+            var items = await filtered
+                .OrderBy(e => e.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(e => new EventDto(e));
+                .Select(e => new EventDto(e))
+                .ToListAsync();
 
             int totalItems = filtered.Count();
             int curPageSize = items.Count();
@@ -55,7 +61,7 @@ namespace EventApi.Application.Events
 
         public async Task<EventDto> GetEventByIdAsync(Guid id, CancellationToken ct = default)
         {
-            var evnt = await _eventStore.GetByIdAsync(id, ct);
+            var evnt = await _dbContext.Events.FindAsync(id, ct);
             if (evnt == null)
                 throw new EventNotFoundException($"Событие {id} не найдено.");
 
@@ -74,7 +80,8 @@ namespace EventApi.Application.Events
                 withValidation: true
             );
 
-            await _eventStore.CreateAsync(evnt, ct);
+            await _dbContext.Events.AddAsync(evnt, ct);
+            await _dbContext.SaveChangesAsync(ct);
 
             _logger.LogInformation("Создано событие {EventId}.", evnt.Id);
             return new EventDto(evnt);
@@ -86,7 +93,7 @@ namespace EventApi.Application.Events
 
             using (await _lockManager.AcquireEventLockAsync(id, ct))
             {
-                evnt = await _eventStore.GetByIdAsync(id, ct);
+                evnt = await _dbContext.Events.FindAsync(id, ct);
                 if (evnt == null)
                     throw new EventNotFoundException($"Событие {id} не найдено.");
 
@@ -100,7 +107,8 @@ namespace EventApi.Application.Events
                     withValidation: true
                 );
 
-                await _eventStore.UpdateAsync(id, evnt, ct);
+                _dbContext.Events.Update(evnt);
+                await _dbContext.SaveChangesAsync(ct);
             }
 
             _logger.LogInformation("Обновлено событие {EventId}.", id);
@@ -109,10 +117,14 @@ namespace EventApi.Application.Events
 
         public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            bool deleted = await _eventStore.DeleteAsync(id, ct);
+            Event? evnt = await _dbContext.Events.FindAsync(id, ct);
+            if (evnt == null)
+                throw new EventNotFoundException($"Событие {id} не найдено.");
 
-            if (deleted)
-                _logger.LogInformation("Удалено событие {EventId}.", id);
+            _dbContext.Events.Remove(evnt);
+            await _dbContext.SaveChangesAsync(ct);
+
+            _logger.LogInformation("Удалено событие {EventId}.", id);
         }
     }
 }

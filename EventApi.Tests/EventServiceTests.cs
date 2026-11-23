@@ -1,11 +1,13 @@
 ﻿using EventApi.Application.Events;
 using EventApi.Models.Events;
+using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
 
 namespace EventApi.Tests
 {
     public class EventServiceTests : IClassFixture<EventApiFixture>
     {
+        private readonly IServiceProvider _serviceProvider;
         private readonly IEventService _eventService;
         private readonly Guid _zeroGuid;
         private readonly Guid _testGuid;
@@ -14,7 +16,8 @@ namespace EventApi.Tests
 
         public EventServiceTests(EventApiFixture fixture)
         {
-            _eventService = fixture.eventService;
+            _serviceProvider = fixture.serviceProvider;
+            _eventService = _serviceProvider.GetRequiredService<IEventService>();
             _zeroGuid = fixture.zeroGuid;
             _testGuid = fixture.testEventGuid;
             _testGuidToDelete = fixture.testEventGuidToDelete;

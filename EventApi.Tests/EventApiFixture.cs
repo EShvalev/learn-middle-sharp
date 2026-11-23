@@ -1,7 +1,9 @@
 ﻿using EventApi.Application;
 using EventApi.Application.Bookings;
 using EventApi.Application.Events;
+using EventApi.DataAсcess;
 using EventApi.Models.Events;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,13 +17,7 @@ namespace EventApi.Tests
 
     public class EventApiFixture
     {
-        public IKeyedLockManager lockManager { get; set; }
-        public IBookingStore bookingStore { get; set; }
-        public IBookingService bookingService { get; set; }
-        public IEventStore eventStore { get; set; }
-        public IEventService eventService { get; set; }
-        public IHostedService bookingProcessingService { get; set; }
-        public ILogger<BookingProcessingService> loggerBPS { get; set; }
+        public IServiceProvider serviceProvider { get; set; }
 
         public Guid zeroGuid = Guid.Parse("00000000-0000-0000-0000-000000000000");
         public Guid testEventGuid { get; set; }
@@ -45,35 +41,37 @@ namespace EventApi.Tests
 
         public EventApiFixture()
         {
-            // Создаем основные объекты тестирования с учетом их зависимостей
-            lockManager = new KeyedLockManager();
-            eventStore = new EventStore();
-            eventService = new EventService(lockManager, eventStore, NullLogger<EventService>.Instance);
-            bookingStore = new InMemoryBookingStore();
-            bookingService = new BookingService(lockManager, eventStore, bookingStore, NullLogger<BookingService>.Instance);
+            // Регистрируем коллекцию сервисов
+            Console.OutputEncoding = Encoding.UTF8;
+            var services = new ServiceCollection().AddLogging(builder =>
+            {
+                builder.AddConsole(); // Добавляем вывод в консоль
+                builder.SetMinimumLevel(LogLevel.Information); // Минимальный уровень
+            });
 
+            // БД контекст (отдельная БД для каждого тестового класса, обеспечивается уникальным именем)
+            var dbName = Guid.NewGuid().ToString();
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseInMemoryDatabase(dbName));
+
+            // Собственные сервисы, взаимодействие которых тестируем
+            services.AddSingleton<IKeyedLockManager, KeyedLockManager>();
+            services.AddScoped<IEventService, EventService>();
+            services.AddScoped<IBookingService, BookingService>();
+            services.AddHostedService<BookingProcessingService>();
+
+            // Создаем сервис провайдер
+            serviceProvider = services.BuildServiceProvider();
+
+            // Запрашиваем EventService для создания тестовой коллекции событий
+            var eventService = serviceProvider.GetRequiredService<IEventService>();
             // Предзаполним список события в сервисе для тестирования выборок и пагинаций
             InitEvents(eventService);
 
             // Ищем Id выбранных события для тестов, когда событие должно быть для штатного выполнения (testEventGuid),
             // и для тестов на удаление события или связанные действия если событие удалено (testEventGuidToDelete).
-            testEventGuid = GetEventIdByTitle("Романтический джаз");
-            testEventGuidToDelete = GetEventIdByTitle("Джем-сэшн");
-
-            // Регистрируем консольный логгер для BPS
-            Console.OutputEncoding = Encoding.UTF8;
-            var serviceProvider = new ServiceCollection()
-                .AddLogging(builder =>
-                {
-                    builder.AddConsole(); // Добавляем вывод в консоль
-                    builder.SetMinimumLevel(LogLevel.Information); // Минимальный уровень
-                })
-                .BuildServiceProvider();
-
-            var factory = serviceProvider.GetRequiredService<ILoggerFactory>();
-
-            loggerBPS = factory.CreateLogger<BookingProcessingService>();
-            bookingProcessingService = new BookingProcessingService(lockManager, eventStore, bookingStore, loggerBPS);
+            testEventGuid = GetEventIdByTitle(eventService, "Романтический джаз");
+            testEventGuidToDelete = GetEventIdByTitle(eventService, "Джем-сэшн");
 
             Console.WriteLine("EventApiFixture() constructor called.");
         }
@@ -86,10 +84,10 @@ namespace EventApi.Tests
             Console.WriteLine("EventApiFixture.InitEvents() called.");
         }
 
-        private Guid GetEventIdByTitle(string title)
+        private Guid GetEventIdByTitle(IEventService eventService, string title)
         {
-            var events = eventStore.GetAllAsync(CancellationToken.None).Result;
-            var evnt = events.FirstOrDefault(e => e.Title == title);
+            var events = eventService.GetEventsAsync(title, null, null, 1, 1000000, CancellationToken.None).Result;
+            var evnt = events.Items.FirstOrDefault(e => e.Title == title);
             return evnt != null ? evnt.Id : zeroGuid;
         }
     }

@@ -1,14 +1,14 @@
-﻿using EventApi.Application.Events;
+﻿using EventApi.DataAсcess;
 using EventApi.Models.Bookings;
 using EventApi.Models.Events;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventApi.Application.Bookings
 {
     public class BookingService : IBookingService
     {
+        private readonly AppDbContext _dbContext;
         private readonly IKeyedLockManager _lockManager;
-        private readonly IEventStore _eventStore;
-        private readonly IBookingStore _bookingStore;
         private readonly ILogger<BookingService> _logger;
 
         // По замечанию ревью спринта 4 сделал _bookingLock статическим, чтобы при scoped регистрации сервиса вызовы из разных инстансов разделяли один и тот же локер
@@ -16,15 +16,13 @@ namespace EventApi.Application.Bookings
         //private static readonly object _bookingLock = new();
 
         public BookingService(
+            AppDbContext dbContext,
             IKeyedLockManager lockManager,
-            IEventStore EventStore,
-            IBookingStore bookingStore,
             ILogger<BookingService> logger
             )
         {
+            _dbContext = dbContext;
             _lockManager = lockManager;
-            _eventStore = EventStore;
-            _bookingStore = bookingStore;
             _logger = logger;
         }
 
@@ -35,22 +33,20 @@ namespace EventApi.Application.Bookings
             //lock (_bookingLock)
             using (await _lockManager.AcquireEventLockAsync(eventId, ct))
             {
-                var evnt = await _eventStore.GetByIdAsync(eventId, ct);
+                var evnt = await _dbContext.Events.FindAsync(eventId, ct);
                 if (evnt == null)
                     throw new EventNotFoundException($"Событие {eventId} не найдено. Бронирование по нему не создано.");
 
                 if (!evnt.TryReserveSeats())
                     throw new NoAvailableSeatsException("Недостаточно свободных мест для этого бронирования");
 
-                // Вызов _EventStore.UpdateEventAsync (сохранение события) здесь не нужен, т.к. поле AvailableSeats уже обновлено при вызове TryReserveSeats(), а другие поля события здесь не меняются.
-                // Данный вызов будет нужен, когда хранилище событий в памяти будет заменено на репозиторий, работающий с БД.
-                //_eventService.UpdateEventAsync(eventId, new CreateEventDto(evnt), ct);
-
-                // После замены _eventService на _eventStore вызов Update нужен, т.к. все изменения теперь производятся не напрямую в объектах хранилища, а через клоны.
-                await _eventStore.UpdateAsync(eventId, evnt, ct);
+                // После перехода на EF вызов Update нужен, т.к. все изменения теперь производятся не напрямую в объектах хранилища, а через клоны.
+                _dbContext.Events.Update(evnt);
 
                 booking = Booking.Create(eventId);
-                await _bookingStore.CreateAsync(booking, ct);
+
+                await _dbContext.Bookings.AddAsync(booking, ct);
+                await _dbContext.SaveChangesAsync(ct);
             }
 
             _logger.LogInformation("Создано бронирование {0} на событие {1}.", booking.Id, booking.EventId);
@@ -59,19 +55,21 @@ namespace EventApi.Application.Bookings
 
         public async Task<BookingDto> ConfirmBookingAsync(Guid id, CancellationToken ct = default)
         {
-            var booking = await _bookingStore.GetByIdAsync(id, ct);
+            var booking = await _dbContext.Bookings.FindAsync(id, ct);
             if (booking == null)
                 throw new EventNotFoundException($"Бронирование {id} не найдено.");
 
             booking.Confirm();
-            await _bookingStore.UpdateAsync(booking.Id, booking, ct);
+
+            _dbContext.Bookings.Update(booking);
+            await _dbContext.SaveChangesAsync(ct);
 
             return new BookingDto(booking);
         }
 
         public async Task<BookingDto> RejectBookingAsync(Guid id, CancellationToken ct = default)
         {
-            var booking = await _bookingStore.GetByIdAsync(id, ct);
+            var booking = await _dbContext.Bookings.FindAsync(id, ct);
             if (booking == null)
                 throw new EventNotFoundException($"Бронирование {id} не найдено.");
 
@@ -79,20 +77,17 @@ namespace EventApi.Application.Bookings
             using (await _lockManager.AcquireEventLockAsync(booking.EventId, ct))
             {
                 booking.Reject();
-                await _bookingStore.UpdateAsync(booking.Id, booking, ct);
+                _dbContext.Bookings.Update(booking);
 
-                var evnt = _eventStore.GetByIdAsync(booking.EventId, ct).Result;
+                var evnt = await _dbContext.Events.FindAsync(booking.EventId, ct);
                 if (evnt == null)
                     throw new EventNotFoundException($"Событие {booking.EventId} не найдено. Отмены бронирования по нему не произошло.");
 
                 evnt.ReleaseSeats();
 
-                // Вызов _EventStore.UpdateEventAsync (сохранение события) здесь не нужен, т.к. поле AvailableSeats уже обновлено при вызове ReleaseSeats(), а другие поля события здесь не меняются.
-                // Данный вызов будет нужен, когда хранилище событий в памяти будет заменено на репозиторий, работающий с БД.
-                //_EventStore.UpdateEventAsync(booking.EventId, new CreateEventDto(evnt), ct);
-
-                // После замены _eventService на _eventStore вызов Update нужен, т.к. все изменения теперь производятся не напрямую в объектах хранилища, а через клоны.
-                await _eventStore.UpdateAsync(booking.EventId, evnt, ct);
+                // После перехода на EF вызов Update нужен, т.к. все изменения теперь производятся не напрямую в объектах хранилища, а через клоны.
+                _dbContext.Events.Update(evnt);
+                await _dbContext.SaveChangesAsync(ct);
             }
 
             return new BookingDto(booking);
@@ -100,7 +95,7 @@ namespace EventApi.Application.Bookings
 
         public async Task<BookingDto> GetBookingByIdAsync(Guid id, CancellationToken ct = default)
         {
-            var booking = await _bookingStore.GetByIdAsync(id, ct);
+            var booking = await _dbContext.Bookings.FindAsync(id, ct);
             if (booking == null)
                 throw new BookingNotFoundException(string.Format("Бронирование {0} не найдено.", id));
 
@@ -110,8 +105,11 @@ namespace EventApi.Application.Bookings
         public async Task<List<BookingDto>> GetBookingsAsync(CancellationToken ct = default)
         {
             // Список всех бронирований
-            var bookings = await _bookingStore.GetAllAsync(ct);
-            var dtos = bookings.Select(b => new BookingDto(b)).ToList();
+            var bookings = _dbContext.Bookings
+                .AsNoTracking()
+                .AsQueryable();
+            var dtos = await bookings.Select(b => new BookingDto(b))
+                .ToListAsync();
 
             return dtos;
         }

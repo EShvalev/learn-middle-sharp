@@ -1,38 +1,40 @@
 ﻿using EventApi.Application.Bookings;
 using EventApi.Application.Events;
+using EventApi.DataAсcess;
 using EventApi.Models.Bookings;
 using EventApi.Models.Events;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Collections.Concurrent;
 
 namespace EventApi.Tests
 {
     //[Collection("GlobalCollection")]
-    public class BookingServiceSeatProcTests : IClassFixture<EventApiFixture>
+    public class BookingServiceSeatProcTests : IClassFixture<EventApiFixture>, IDisposable
     {
-        private readonly IBookingStore _bookingStore;
-        private readonly IEventStore _eventStore;
+        private readonly IServiceProvider _serviceProvider;
         private readonly IBookingService _bookingService;
-        private readonly IHostedService _bookingProcessingService;
+        private readonly IServiceScope _scope;
+        private readonly AppDbContext _dbContext;
         private readonly Guid _zeroGuid;
-        private readonly Guid _testGuid;
-        private readonly Guid _testGuidToDelete;
 
         public BookingServiceSeatProcTests(EventApiFixture fixture)
         {
-            _bookingStore = fixture.bookingStore;
-            _bookingService = fixture.bookingService;
-            _eventStore = fixture.eventStore;
+            _serviceProvider = fixture.serviceProvider;
+            _scope = _serviceProvider.CreateScope();
+            _dbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            _bookingService = _scope.ServiceProvider.GetRequiredService<IBookingService>();
 
             _zeroGuid = fixture.zeroGuid;
-            _testGuid = fixture.testEventGuid;
-            _testGuidToDelete = fixture.testEventGuidToDelete;
+        }
 
-            _bookingProcessingService = fixture.bookingProcessingService;
+        public void Dispose()
+        {
+            _scope.Dispose();
         }
 
         // Вспомогательный метод для тестов: создает тестовое событие.
-        private Event CreateTestEvent(int totalSeats)
+        private async Task<Event> CreateTestEvent(int totalSeats)
         {
             var dto = new CreateEventDto()
             {
@@ -52,10 +54,8 @@ namespace EventApi.Tests
                 withValidation: true
             );
 
-            _eventStore.CreateAsync(evnt, CancellationToken.None);
-
-            //var dto = _eventService.CreateEventAsync(dto, CancellationToken.None).Result;
-            //var evnt = _eventStore.GetByIdAsync(dto.Id, CancellationToken.None);
+            await _dbContext.Events.AddAsync(evnt, CancellationToken.None);
+            await _dbContext.SaveChangesAsync(CancellationToken.None);
 
             return evnt;
         }
@@ -77,13 +77,14 @@ namespace EventApi.Tests
         public async Task CreateBooking_JustAfterCreating_ReturnsCorrectStateAndSeats()
         {
             // Arrange
-            var evnt = CreateTestEvent(totalSeats: 1);
+            var evnt = await CreateTestEvent(totalSeats: 1);
             int expectedSeats = evnt.AvailableSeats - 1;
 
             // Act
             var booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
-            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
-            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            // После манипуляций с бронированием событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
+            //await _dbContext.Entry(evnt).ReloadAsync(CancellationToken.None); //_eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            evnt = await _dbContext.Events.FindAsync(evnt.Id, CancellationToken.None);
 
             // Assert
             Assert.Equal(BookingStatus.Pending, booking.Status);
@@ -94,7 +95,7 @@ namespace EventApi.Tests
         public async Task CreateSeveralBookings_ExistingEvent_ReturnsUniqueIdsAndZeroAvailableSeats()
         {
             // Arrange
-            var evnt = CreateTestEvent(totalSeats: 5);
+            var evnt = await CreateTestEvent(totalSeats: 5);
             int count = evnt.AvailableSeats;
             HashSet<Guid> ids = new HashSet<Guid>();
             int expectedSeats = 0;
@@ -105,8 +106,9 @@ namespace EventApi.Tests
                 var booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
                 ids.Add(booking.Id);
             }
-            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
-            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            // После манипуляций с бронированием событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
+            //await _dbContext.Entry(evnt).ReloadAsync(CancellationToken.None); //_eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            evnt = await _dbContext.Events.FindAsync(evnt.Id, CancellationToken.None);
 
             // Assert
             Assert.DoesNotContain(_zeroGuid, ids);
@@ -118,7 +120,7 @@ namespace EventApi.Tests
         public async Task CreateSeveralBookings_ExistingEvent_ThrowsNoAvailableSeatsExceptionWhenOverbook()
         {
             // Arrange
-            var evnt = CreateTestEvent(totalSeats: 2);
+            var evnt = await CreateTestEvent(totalSeats: 2);
             int count = evnt.AvailableSeats + 1; // Overbook!!!
 
             // Act
@@ -138,7 +140,7 @@ namespace EventApi.Tests
         public async Task CreateBooking_ExistingEvent_ThrowsNoAvailableSeatsExceptionWhenNoAvailSeats()
         {
             // Arrange
-            var evnt = CreateTestEvent(totalSeats: 1);
+            var evnt = await CreateTestEvent(totalSeats: 1);
 
             // Act
             await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None); // резевируем одно место, т.к. всего было одно, следующий вызов должен выбросить исключение
@@ -153,7 +155,7 @@ namespace EventApi.Tests
         public async Task CreateBooking_AfterConfirming_ReturnsCorrectStatusAndSeats()
         {
             // Arrange
-            var evnt = CreateTestEvent(totalSeats: 1);
+            var evnt = await CreateTestEvent(totalSeats: 1);
             var expected = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
             int expectedSeats = evnt.AvailableSeats; // после отмены брони количество свободных мест не должно измениться
 
@@ -173,16 +175,18 @@ namespace EventApi.Tests
         public async Task CreateBooking_AfterRejecting_ReturnsCorrectStatusAndSeats()
         {
             // Arrange
-            var evnt = CreateTestEvent(totalSeats: 1);
+            var evnt = await CreateTestEvent(totalSeats: 1);
             var expected = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
-            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
-            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            // После манипуляций с бронированием событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
+            //await _dbContext.Entry(evnt).ReloadAsync(CancellationToken.None); //_eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            evnt = await _dbContext.Events.FindAsync(evnt.Id, CancellationToken.None);
             int expectedSeats = evnt.AvailableSeats + 1; // после отмены брони одно свободное место должно вернуться
 
             // Act
             var booking = await _bookingService.RejectBookingAsync(expected.Id, CancellationToken.None);
-            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
-            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            // После манипуляций с бронированием событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
+            //await _dbContext.Entry(evnt).ReloadAsync(CancellationToken.None); //_eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            evnt = await _dbContext.Events.FindAsync(evnt.Id, CancellationToken.None);
 
             // Assert
             Assert.Equal(expected.Id, booking.Id);
@@ -197,7 +201,7 @@ namespace EventApi.Tests
         public async Task CreateBooking_AfterRejecting_CanCreateAnotherBooking()
         {
             // Arrange
-            var evnt = CreateTestEvent(totalSeats: 1);
+            var evnt = await CreateTestEvent(totalSeats: 1);
             var first_booking = await _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
 
             // Act
@@ -214,7 +218,7 @@ namespace EventApi.Tests
         public async Task CreateConcurrentBookings_ExistingEvent_ReturnsCorrectSuccessCountAndExceptionCount()
         {
             // Arrange
-            var evnt = CreateTestEvent(totalSeats: 5);
+            var evnt = await CreateTestEvent(totalSeats: 5);
             int expectedSeats = 0;
 
             int count = 20; // 5 должно создаться успешно + 15 NoAvailableSeatsException
@@ -222,7 +226,12 @@ namespace EventApi.Tests
 
             for (int i = 0; i < count; i++)
             {
-                allTasks.Add(Task.Run(() => _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None)));
+                allTasks.Add(Task.Run(async () =>
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+                    await bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
+                }));
             }
 
             // Act
@@ -230,8 +239,8 @@ namespace EventApi.Tests
             {
                 await Task.WhenAll(allTasks);
             });
-            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
-            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            // После манипуляций с бронированием событие нужно перезапрашивать из хранилища, т.к. в Task.Run создавались локальные БД контексты.
+            await _dbContext.Entry(evnt).ReloadAsync(CancellationToken.None); //_eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
 
             // Assert
             Assert.Equal(5, allTasks.Where(t => t.IsCompletedSuccessfully).Count());
@@ -244,7 +253,7 @@ namespace EventApi.Tests
         {
             // Arrange
             int count = 10; // должны создаться успешно с уникальными Id
-            var evnt = CreateTestEvent(totalSeats: count);
+            var evnt = await CreateTestEvent(totalSeats: count);
             int expectedSeats = 0;
 
             List<Task> allTasks = new List<Task>();
@@ -253,17 +262,19 @@ namespace EventApi.Tests
             // Act
             for (int i = 0; i < count; i++)
             {
-                allTasks.Add(Task.Run(() =>
+                allTasks.Add(Task.Run(async () =>
                 {
-                    var booking = _bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
+                    using var scope = _serviceProvider.CreateScope();
+                    var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+                    var booking = bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
                     ids.Add(booking.Result.Id);
                 }
                 ));
             }
 
             await Task.WhenAll(allTasks);
-            // После манипуляций с бронированим событие нужно запрашивать из хранилища, т.к. именно в нем содержится актуальная версия состояния
-            evnt = await _eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            // После манипуляций с бронированием событие нужно перезапрашивать из хранилища, т.к. в Task.Run создавались локальные БД контексты.
+            await _dbContext.Entry(evnt).ReloadAsync(CancellationToken.None); //_eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
 
             // Assert
             Assert.Equal(count, ids.Distinct().Count());

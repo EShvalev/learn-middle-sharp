@@ -1,20 +1,20 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using EventApi.Models.Bookings;
 
 namespace EventApi.Models.Events
 {
     public class Event
     {
         public Guid Id { get; init; }
-        public string Title { get; private set; }
+        public string Title { get; private set; } = null!;
         public string? Description { get; private set; }
         public DateTime? StartAt { get; private set; }
         public DateTime? EndAt { get; private set; }
-        private int totalSeats;
-        public int TotalSeats { get => totalSeats; private set => totalSeats = value; }
-        private int availableSeats;
-        public int AvailableSeats { get => availableSeats; private set => availableSeats = value; }
+        public int TotalSeats { get; private set; }
+        public int AvailableSeats { get; private set; }
+        public List<Booking> Bookings { get; private set; } = null!;
 
-        private Event() { Title = string.Empty; }
+        private Event() { }
 
         // Фабричный метод создания/инициализации
         public static Event Create(string title, string? description, DateTime? startAt, DateTime? endAt, int? totalSeats, bool withValidation = true)
@@ -60,8 +60,8 @@ namespace EventApi.Models.Events
             if (totalSeats != null && totalSeats != this.TotalSeats)
             {
                 int deltaSeats = totalSeats.Value - this.TotalSeats;
-                TryResetSeats(ref this.totalSeats, 0, int.MaxValue, totalSeats.Value);
-                TryResetSeats(ref this.availableSeats, 0, this.TotalSeats, this.AvailableSeats + deltaSeats);
+                this.TotalSeats = ResetSeats(0, int.MaxValue, totalSeats.Value);
+                this.AvailableSeats = ResetSeats(0, this.TotalSeats, this.AvailableSeats + deltaSeats);
             }
 
             return this;
@@ -92,7 +92,7 @@ namespace EventApi.Models.Events
             }
         }
 
-        private void TryResetSeats(ref int storeSeats, int minSeats, int maxSeats, int updatedSeats)
+        private int ResetSeats(int minSeats, int maxSeats, int updatedSeats)
         {
             // 19.11.2026: после добавления KeyLockedManager как сквозного сервиса блокировки убрал CAS вызовы по замечанию "не стоит смешивать два типа блокировок на изменении одного объекта" 
             // Оставил закомментрованную прежнюю версию до следующего спринта.
@@ -111,12 +111,16 @@ namespace EventApi.Models.Events
             //}
             //while (Interlocked.CompareExchange(ref storeSeats, updated, current) != current);
 
+            int storeSeats = 0;
+
             if (updatedSeats < minSeats)
                 storeSeats = minSeats;
             else if (updatedSeats > maxSeats)
                 storeSeats = maxSeats;
             else
                 storeSeats = updatedSeats;
+
+            return storeSeats;
         }
 
         public bool TryReserveSeats(int count = 1)
@@ -136,7 +140,7 @@ namespace EventApi.Models.Events
             //}
             //while (Interlocked.CompareExchange(ref this.availableSeats, updated, current) != current);
 
-            if (this.availableSeats < count)
+            if (this.AvailableSeats < count)
                 return false;
 
             this.AvailableSeats -= count;
@@ -161,7 +165,7 @@ namespace EventApi.Models.Events
             //}
             //while (Interlocked.CompareExchange(ref this.availableSeats, updated, current) != current);
 
-            if (this.totalSeats < this.availableSeats + count)
+            if (this.TotalSeats < this.AvailableSeats + count)
                 return;
 
             this.AvailableSeats += count;

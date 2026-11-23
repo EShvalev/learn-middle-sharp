@@ -1,33 +1,49 @@
 ﻿using EventApi.Application.Bookings;
 using EventApi.Application.Events;
+using EventApi.DataAсcess;
 using EventApi.Models.Bookings;
 using EventApi.Models.Events;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.ComponentModel;
 
 namespace EventApi.Tests
 {
     //[Collection("GlobalCollection")]
-    public class BookingServiceTests : IClassFixture<EventApiFixture>
+    public class BookingServiceTests : IClassFixture<EventApiFixture>, IDisposable
     {
-        private readonly IBookingStore _bookingStore;
+        private readonly IServiceProvider _serviceProvider;
         private readonly IBookingService _bookingService;
         private readonly IEventService _eventService;
         private readonly IHostedService _bookingProcessingService;
+        private readonly IServiceScope _scope;
+        private readonly AppDbContext _dbContext;
         private readonly Guid _zeroGuid;
         private readonly Guid _testGuid;
         private readonly Guid _testGuidToDelete;
 
         public BookingServiceTests(EventApiFixture fixture)
         {
-            _bookingStore = fixture.bookingStore;
-            _bookingService = fixture.bookingService;
-            _eventService = fixture.eventService;
+            _serviceProvider = fixture.serviceProvider;
+
+            _bookingProcessingService = _serviceProvider//.GetRequiredService<BookingProcessingService>();
+                .GetServices<IHostedService>()
+                .OfType<BookingProcessingService>()
+                .First();
+
+            _scope = _serviceProvider.CreateScope();
+            _dbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            _eventService = _scope.ServiceProvider.GetRequiredService<IEventService>();
+            _bookingService = _scope.ServiceProvider.GetRequiredService<IBookingService>();
 
             _zeroGuid = fixture.zeroGuid;
             _testGuid = fixture.testEventGuid;
             _testGuidToDelete = fixture.testEventGuidToDelete;
+        }
 
-            _bookingProcessingService = fixture.bookingProcessingService;
+        public void Dispose()
+        {
+            _scope.Dispose();
         }
 
         [Fact]
@@ -71,7 +87,10 @@ namespace EventApi.Tests
             while (!cts.Token.IsCancellationRequested)
             {
                 await Task.Delay(7000); // на каждой итерации ждем 7 сек = 5+2 (тик BPS таймера + задержка обработки)
-                booking_after_processing = await _bookingService.GetBookingByIdAsync(booking_before_processing.Id, CancellationToken.None);
+
+                using var scope = _serviceProvider.CreateScope();
+                var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+                booking_after_processing = await bookingService.GetBookingByIdAsync(booking_before_processing.Id, CancellationToken.None);
 
                 // Если статус брони изменился (не начальный), выходим из цикла через cts.Cancel (он же остановливает фоновый BPS)
                 if (booking_after_processing.Status != BookingStatus.Pending)
@@ -173,8 +192,9 @@ namespace EventApi.Tests
             var expected = Booking.Create(_testGuid);
 
             // Act
-            await _bookingStore.CreateAsync(expected, CancellationToken.None);
-            var booking = await _bookingStore.GetByIdAsync(expected.Id, CancellationToken.None);
+            await _dbContext.Bookings.AddAsync(expected, CancellationToken.None); //_bookingStore.CreateAsync(expected, CancellationToken.None);
+            await _dbContext.SaveChangesAsync(CancellationToken.None);
+            var booking = await _dbContext.Bookings.FindAsync(expected.Id, CancellationToken.None); //_bookingStore.GetByIdAsync(expected.Id, CancellationToken.None);
 
             // Assert
             Assert.Equal(expected.Id, booking.Id);

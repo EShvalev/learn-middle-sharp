@@ -1,15 +1,18 @@
 ﻿using EventApi.Application.Events;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EventApi.Tests
 {
     public class EventServiceFiltPagTests : IClassFixture<EventApiFixture>
     {
+        private readonly IServiceProvider _serviceProvider;
         private readonly IEventService _eventService;
         private readonly int _VeryLongPageSize = 1000000;
 
         public EventServiceFiltPagTests(EventApiFixture fixture)
         {
-            _eventService = fixture.eventService;
+            _serviceProvider = fixture.serviceProvider;
+            _eventService = _serviceProvider.GetRequiredService<IEventService>();
         }
 
         [Fact]

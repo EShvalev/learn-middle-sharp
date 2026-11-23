@@ -1,4 +1,6 @@
-﻿namespace EventApi.Models.Bookings
+﻿using EventApi.Models.Events;
+
+namespace EventApi.Models.Bookings
 {
     public class Booking
     {
@@ -7,6 +9,7 @@
         public BookingStatus Status { get; private set; }
         public DateTime CreatedAt { get; init; }
         public DateTime? ProcessedAt { get; private set; }
+        public Event Event { get; private set; } = null!;
 
         private Booking() { }
 

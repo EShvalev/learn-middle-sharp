@@ -1,14 +1,15 @@
 ﻿using EventApi.Application.Events;
-using EventApi.Models.Events;
+using EventApi.DataAсcess;
 using EventApi.Models.Bookings;
+using EventApi.Models.Events;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventApi.Application.Bookings
 {
     public class BookingProcessingService : BackgroundService
     {
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly IKeyedLockManager _lockManager;
-        private readonly IEventStore _eventStore;
-        private readonly IBookingStore _bookingStore;
         private readonly ILogger<BookingProcessingService> _logger;
         private readonly TimeSpan _timerPeriod = TimeSpan.FromSeconds(5);
         private readonly int _processingDelay = 2000;
@@ -16,15 +17,13 @@ namespace EventApi.Application.Bookings
         //private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
         public BookingProcessingService(
+            IServiceScopeFactory scopeFactory,
             IKeyedLockManager lockManager,
-            IEventStore eventStore,
-            IBookingStore bookingStore,
             ILogger<BookingProcessingService> logger
             )
         {
+            _scopeFactory = scopeFactory;
             _lockManager = lockManager;
-            _eventStore = eventStore;
-            _bookingStore = bookingStore;
             _logger = logger;
         }
 
@@ -65,11 +64,17 @@ namespace EventApi.Application.Bookings
 
         private async Task ProcessBookings(CancellationToken ct)
         {
-            var bookings = await _bookingStore.GetAllAsync(ct);
+            await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+            using var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var bookings = context.Bookings //.GetAllAsync(ct);
+                .AsNoTracking()
+                .AsEnumerable();
             var pending = bookings
                 .Where(booking => booking.Status == BookingStatus.Pending).ToList<Booking>();
             var tasks = pending
-                .Select(booking => ProcessBookingAsync(booking, ct)).ToList();
+                .Select(booking => ProcessBookingAsync(booking, ct))
+                .ToList();
 
             await Task.WhenAll(tasks);
         }
@@ -82,6 +87,9 @@ namespace EventApi.Application.Bookings
             // Семафор входит в асинхронное ожидание
             //await _processingSemaphore.WaitAsync(ct);
 
+            await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+            using var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
             Event? evnt = null;
             bool needReleaseSeats = false;
 
@@ -89,17 +97,17 @@ namespace EventApi.Application.Bookings
             {
                 try
                 {
-                    evnt = await _eventStore.GetByIdAsync(booking.EventId, ct);
+                    evnt = await context.Events.FindAsync(booking.EventId, ct);
                     if (evnt == null)
                     {
                         booking.Reject();
-                        await _bookingStore.UpdateAsync(booking.Id, booking, ct);
+                        context.Bookings.Update(booking);
                         _logger.LogWarning("[{Timestamp}]: Событие {EventId} не найдено, бронирование {BookingId} отклонено.", DateTime.Now, booking.EventId, booking.Id);
                     }
                     else
                     {
                         booking.Confirm();
-                        await _bookingStore.UpdateAsync(booking.Id, booking, ct);
+                        context.Bookings.Update(booking);
                         _logger.LogInformation("[{Timestamp}]: Бронирование {BookingId} подтверждено.", DateTime.Now, booking.Id);
                     }
                 }
@@ -115,7 +123,7 @@ namespace EventApi.Application.Bookings
                     if (booking.Status != BookingStatus.Rejected)
                     {
                         booking.Reject();
-                        await _bookingStore.UpdateAsync(booking.Id, booking, ct);
+                        context.Bookings.Update(booking);
                         _logger.LogError(ex, "При обработке бронирования {BookingId} произошла ошибка, бронирование отклонено.", booking.Id);
                     }
                 }
@@ -124,8 +132,11 @@ namespace EventApi.Application.Bookings
                     if (needReleaseSeats && evnt != null)
                     {
                         evnt.ReleaseSeats();
-                        await _eventStore.UpdateAsync(evnt.Id, evnt, ct);
+                        context.Events.Update(evnt);
                     }
+
+                    // Сохраняем все изменения
+                    await context.SaveChangesAsync(ct);
 
                     //_processingSemaphore.Release();
                 }
