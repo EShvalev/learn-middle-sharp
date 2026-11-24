@@ -1,17 +1,19 @@
 ﻿using EventApi.Models.Events;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EventApi.Application.Events
 {
-    public class EventDto
+    public sealed record EventDto
     {
-        public Guid Id { get; set; }
-        public string Title { get; set; }
+        public required Guid Id { get; set; }
+        public required string Title { get; set; }
         public string? Description { get; set; }
-        public DateTime? StartAt { get; set; }
-        public DateTime? EndAt { get; set; }
-        public int TotalSeats { get; set; }
-        public int AvailableSeats { get; set; }
+        public required DateTime StartAt { get; set; }
+        public required DateTime EndAt { get; set; }
+        public required int TotalSeats { get; set; }
+        public required int AvailableSeats { get; set; }
 
+        [SetsRequiredMembers]
         public EventDto(Event evnt)
         {
             Id = evnt.Id;

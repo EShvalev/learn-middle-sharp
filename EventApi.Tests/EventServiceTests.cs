@@ -72,13 +72,68 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public async Task CreateEvent_IfDateInvalid_ThrowsValidationException()
+        public async Task CreateEvent_IfTitleIsNull_ThrowsValidationException()
+        {
+            // Arrange
+            var evnt = new CreateEventDto() { Title = null, Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ValidationException>(() => _eventService.CreateEventAsync(evnt, CancellationToken.None));
+
+            // Act & Assert
+            Assert.Contains("Title", exception.Errors.Keys);
+        }
+
+        [Fact]
+        public async Task CreateEvent_IfTitleIsEmpty_ThrowsValidationException()
+        {
+            // Arrange
+            var evnt = new CreateEventDto() { Title = "   ", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ValidationException>(() => _eventService.CreateEventAsync(evnt, CancellationToken.None));
+
+            // Act & Assert
+            Assert.Contains("Title", exception.Errors.Keys);
+        }
+
+        [Fact]
+        public async Task CreateEvent_IfStartAtIsNull_ThrowsValidationException()
+        {
+            // Arrange
+            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = null, EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ValidationException>(() => _eventService.CreateEventAsync(evnt, CancellationToken.None));
+
+            // Act & Assert
+            Assert.Contains("StartAt", exception.Errors.Keys);
+        }
+
+        [Fact]
+        public async Task CreateEvent_IfEndAtIsNull_ThrowsValidationException()
+        {
+            // Arrange
+            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = null, TotalSeats = 200 };
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ValidationException>(() => _eventService.CreateEventAsync(evnt, CancellationToken.None));
+
+            // Act & Assert
+            Assert.Contains("EndAt", exception.Errors.Keys);
+        }
+
+        [Fact]
+        public async Task CreateEvent_IfEndAtBeforeStartAt_ThrowsValidationException()
         {
             // Arrange
             var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02"), TotalSeats = 200 };
 
+            // Act
+            var exception = await Assert.ThrowsAsync<ValidationException>(() => _eventService.CreateEventAsync(evnt, CancellationToken.None));
+
             // Act & Assert
-            await Assert.ThrowsAsync<ValidationException>(() => _eventService.CreateEventAsync(evnt, CancellationToken.None));
+            Assert.Contains("EndAt", exception.Errors.Keys);
         }
 
         [Fact]
@@ -111,14 +166,73 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public async Task UpdateEvent_IfDateInvalid_ThrowsValidationException()
+        public async Task UpdateEvent_IfTitleIsNull_ThrowsValidationException()
+        {
+            // Arrange
+            var evnt = new CreateEventDto() { Title = null, Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
+            var id = _testGuid;
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ValidationException>(() => _eventService.UpdateEventAsync(id, evnt, CancellationToken.None));
+
+            // Act & Assert
+            Assert.Contains("Title", exception.Errors.Keys);
+        }
+
+        [Fact]
+        public async Task UpdateEvent_IfTitleIsEmpty_ThrowsValidationException()
+        {
+            // Arrange
+            var evnt = new CreateEventDto() { Title = "    ", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
+            var id = _testGuid;
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ValidationException>(() => _eventService.UpdateEventAsync(id, evnt, CancellationToken.None));
+
+            // Act & Assert
+            Assert.Contains("Title", exception.Errors.Keys);
+        }
+
+        [Fact]
+        public async Task UpdateEvent_IfStartAtIsNull_ThrowsValidationException()
+        {
+            // Arrange
+            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = null, EndAt = Convert.ToDateTime("2026-07-02"), TotalSeats = 200 };
+            var id = _testGuid;
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ValidationException>(() => _eventService.UpdateEventAsync(id, evnt, CancellationToken.None));
+
+            // Act & Assert
+            Assert.Contains("StartAt", exception.Errors.Keys);
+        }
+
+        [Fact]
+        public async Task UpdateEvent_IfEndAtIsNull_ThrowsValidationException()
+        {
+            // Arrange
+            var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = null, TotalSeats = 200 };
+            var id = _testGuid;
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ValidationException>(() => _eventService.UpdateEventAsync(id, evnt, CancellationToken.None));
+
+            // Act & Assert
+            Assert.Contains("EndAt", exception.Errors.Keys);
+        }
+
+        [Fact]
+        public async Task UpdateEvent_IfEndAtBeforeStartAt_ThrowsValidationException()
         {
             // Arrange
             var evnt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-05"), EndAt = Convert.ToDateTime("2026-07-02"), TotalSeats = 200 };
             var id = _testGuid;
 
+            // Act
+            var exception = await Assert.ThrowsAsync<ValidationException>(() => _eventService.UpdateEventAsync(id, evnt, CancellationToken.None));
+
             // Act & Assert
-            await Assert.ThrowsAsync<ValidationException>(() => _eventService.UpdateEventAsync(id, evnt, CancellationToken.None));
+            Assert.Contains("EndAt", exception.Errors.Keys);
         }
 
         [Fact]

@@ -3,10 +3,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace EventApi.Application.Events
 {
-    public class CreateEventDto : IValidatableObject
+    public sealed record CreateEventDto : IValidatableObject
     {
         [Required(ErrorMessage = "Заголовок события обязателен.")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
         public string? Description { get; set; }
         [Required(ErrorMessage = "Дата начала события обязательна.")]
         public DateTime? StartAt { get; set; }
@@ -15,7 +15,7 @@ namespace EventApi.Application.Events
         [Required(ErrorMessage = "Общее количество мест обязательно.")]
         public int? TotalSeats { get; set; }
 
-        public CreateEventDto() { Title = string.Empty; }
+        public CreateEventDto() { }
         public CreateEventDto(Event evnt)
         {
             Title = evnt.Title;
