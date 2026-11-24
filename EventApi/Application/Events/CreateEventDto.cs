@@ -29,8 +29,8 @@ namespace EventApi.Application.Events
         {
             List<ValidationResult> errors = new List<ValidationResult>();
 
-            // Проверку EndAt > StartAt реализуем здесь
-            if (!(EndAt > StartAt))
+            // Проверку MUSTBE (EndAt > StartAt) реализуем здесь
+            if (EndAt <= StartAt)
             {
                 errors.Add(new ValidationResult("Дата окончания должна быть позже даты начала события.", ["Дата окончания"]));
             }
@@ -40,7 +40,6 @@ namespace EventApi.Application.Events
             {
                 errors.Add(new ValidationResult("Общее количество мест должно быть больше 0.", ["Общее количество мест"]));
             }
-
 
             return errors;
         }

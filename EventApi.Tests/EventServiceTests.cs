@@ -1,7 +1,6 @@
-﻿using EventApi.Application.Events;
-using EventApi.Models.Events;
-using Microsoft.Extensions.DependencyInjection;
-using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.Extensions.DependencyInjection;
+using EventApi.Application.Events;
+using EventApi.Application.Exceptions;
 
 namespace EventApi.Tests
 {
@@ -33,7 +32,7 @@ namespace EventApi.Tests
             var result = await _eventService.GetEventsAsync(null, null, null, 1, pageSize, CancellationToken.None);
 
             // Assert
-            Assert.Equal(result.TotalItems, result.Items.Count());
+            Assert.Equal(result.TotalCount, result.Items.Count());
         }
 
         [Fact]
@@ -50,13 +49,13 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public async Task GetEventById_IfNotExists_ThrowsEventNotFoundException()
+        public async Task GetEventById_IfNotExists_ThrowsNotFoundException()
         {
             // Arrange
             var id = _zeroGuid;
 
             // Act & Assert
-            await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.GetEventByIdAsync(id, CancellationToken.None));
+            await Assert.ThrowsAsync<NotFoundException>(() => _eventService.GetEventByIdAsync(id, CancellationToken.None));
         }
 
         [Fact]
@@ -101,14 +100,14 @@ namespace EventApi.Tests
         }
 
         [Fact]
-        public async Task UpdateEvent_IfNotExists_ThrowsEventNotFoundException()
+        public async Task UpdateEvent_IfNotExists_ThrowsNotFoundException()
         {
             // Arrange
             var envt = new CreateEventDto() { Title = "Свинг белой ночи", Description = "Ежегодный джазовый фестиваль в СПб", StartAt = Convert.ToDateTime("2026-07-02"), EndAt = Convert.ToDateTime("2026-07-05"), TotalSeats = 200 };
             var id = _zeroGuid;
 
             // Act & Assert
-            await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.UpdateEventAsync(_zeroGuid, envt, CancellationToken.None));
+            await Assert.ThrowsAsync<NotFoundException>(() => _eventService.UpdateEventAsync(_zeroGuid, envt, CancellationToken.None));
         }
 
         [Fact]

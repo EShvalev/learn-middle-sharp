@@ -1,11 +1,10 @@
-﻿using EventApi.Application.Bookings;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using EventApi.Application.Bookings;
 using EventApi.Application.Events;
+using EventApi.Application.Exceptions;
 using EventApi.DataAсcess;
 using EventApi.Models.Bookings;
-using EventApi.Models.Events;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System.ComponentModel;
 
 namespace EventApi.Tests
 {
@@ -148,10 +147,10 @@ namespace EventApi.Tests
             var id = _zeroGuid;
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<BookingNotFoundException>(() => _bookingService.GetBookingByIdAsync(id, CancellationToken.None));
+            var exception = await Assert.ThrowsAsync<NotFoundException>(() => _bookingService.GetBookingByIdAsync(id, CancellationToken.None));
 
             // Assert
-            Assert.Equal(typeof(BookingNotFoundException), exception.GetType());
+            Assert.Equal(typeof(NotFoundException), exception.GetType());
         }
 
         [Fact]
@@ -161,10 +160,10 @@ namespace EventApi.Tests
             var eventId = _zeroGuid;
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<EventNotFoundException>(() => _bookingService.CreateBookingAsync(eventId, CancellationToken.None));
+            var exception = await Assert.ThrowsAsync<NotFoundException>(() => _bookingService.CreateBookingAsync(eventId, CancellationToken.None));
 
             // Assert
-            Assert.Equal(typeof(EventNotFoundException), exception.GetType());
+            Assert.Equal(typeof(NotFoundException), exception.GetType());
         }
 
         [Fact]
@@ -174,14 +173,14 @@ namespace EventApi.Tests
             var eventId = _testGuidToDelete;
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<EventNotFoundException>(async () =>
+            var exception = await Assert.ThrowsAsync<NotFoundException>(async () =>
             {
                 await _eventService.DeleteAsync(eventId, CancellationToken.None);
                 await _bookingService.CreateBookingAsync(eventId, CancellationToken.None);
             });
 
             // Assert
-            Assert.Equal(typeof(EventNotFoundException), exception.GetType());
+            Assert.Equal(typeof(NotFoundException), exception.GetType());
         }
 
         [Fact]

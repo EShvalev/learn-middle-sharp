@@ -1,7 +1,7 @@
-﻿using EventApi.DataAсcess;
+﻿using Microsoft.EntityFrameworkCore;
+using EventApi.DataAсcess;
 using EventApi.Models.Events;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Concurrent;
+using EventApi.Application.Exceptions;
 
 namespace EventApi.Application.Events
 {
@@ -38,7 +38,7 @@ namespace EventApi.Application.Events
             ArgumentNullException.ThrowIfNull(evnt);
 
             if (await _dbContext.Events.FindAsync(id, ct) == null)
-                throw new EventNotFoundException($"Событие {id} не найдено.");
+                throw new NotFoundException($"Событие {id} не найдено.");
 
             _dbContext.Events.Update(evnt);
         }
@@ -47,7 +47,7 @@ namespace EventApi.Application.Events
         {
             Event? evnt = await _dbContext.Events.FindAsync(id, ct);
             if (evnt == null)
-                throw new EventNotFoundException($"Событие {id} не найдено.");
+                throw new NotFoundException($"Событие {id} не найдено.");
 
             _dbContext.Events.Remove(evnt);
         }

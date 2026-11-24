@@ -38,7 +38,9 @@ public class Program
                     var customResponse = new ProblemDetails
                     {
                         Status = StatusCodes.Status400BadRequest,
-                        Detail = errorsString
+                        Title = "Ошибка валидации (ModelState)",
+                        Detail = errorsString,
+                        Type = "https://tools.ietf.org/html/rfc9110#section-15.5.1"
                     };
 
                     return new BadRequestObjectResult(customResponse);
@@ -51,8 +53,6 @@ public class Program
 
         // Регистрируем свои сервисы
         builder.Services.AddSingleton<IKeyedLockManager, KeyedLockManager>();
-        builder.Services.AddSingleton<IEventRepository, EventRepository>();
-        builder.Services.AddSingleton<IBookingRepository, BookingRepository>();
         builder.Services.AddScoped<IEventService, EventService>();
         builder.Services.AddScoped<IBookingService, BookingService>();
 

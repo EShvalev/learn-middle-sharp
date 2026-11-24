@@ -1,7 +1,6 @@
-﻿using EventApi.Models.Bookings;
-using EventApi.Models.Events;
+﻿using EventApi.Application.Exceptions;
+using EventApi.Models.Bookings;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
 namespace EventApi.Presentation
 {
@@ -32,10 +31,10 @@ namespace EventApi.Presentation
 
         private async Task HandleException(HttpContext httpContext, Exception ex)
         {
-            var statusCode = MapStatusCode(ex);
+            var problemDetails = MapStatusCode(ex);
 
             // Логируем только 500 ошибки (учел замечание ревью по спринту 4)
-            if (statusCode == StatusCodes.Status500InternalServerError)
+            if (problemDetails.Status == StatusCodes.Status500InternalServerError)
             {
                 _logger.LogError(
                     ex,
@@ -51,27 +50,26 @@ namespace EventApi.Presentation
             }
 
             var contentType = "application/problem+json";
-            httpContext.Response.StatusCode = statusCode;
+            httpContext.Response.StatusCode = problemDetails.Status ?? StatusCodes.Status400BadRequest;
             httpContext.Response.ContentType = contentType;
 
-            var error = new ProblemDetails
-            {
-                Status = statusCode,
-                Detail = ex.Message
-            };
-
-            await httpContext.Response.WriteAsJsonAsync(error, error.GetType(), System.Text.Json.JsonSerializerOptions.Default, contentType);
+            await httpContext.Response.WriteAsJsonAsync(problemDetails, problemDetails.GetType(), System.Text.Json.JsonSerializerOptions.Default, contentType);
         }
 
-        private static int MapStatusCode(Exception ex)
+        private static ProblemDetails MapStatusCode(Exception ex)
             => ex switch
             {
-                BookingStatusException bse => StatusCodes.Status400BadRequest,
-                BookingNotFoundException nfe => StatusCodes.Status404NotFound,
-                EventNotFoundException nfe => StatusCodes.Status404NotFound,
-                ValidationException ve => StatusCodes.Status400BadRequest,
-                NoAvailableSeatsException nas => StatusCodes.Status409Conflict,
-                _ => StatusCodes.Status500InternalServerError
+                BookingStatusException tex => tex.ToProblemDetails(),
+                NotFoundException tex => tex.ToProblemDetails(),
+                ValidationException tex => tex.ToProblemDetails(),
+                NoAvailableSeatsException tex => tex.ToProblemDetails(),
+                _ => new ProblemDetails()
+                {
+                    Status = StatusCodes.Status500InternalServerError,
+                    Title = "Внутренняя ошибка сервера",
+                    Detail = ex.Message,
+                    Type = "https://www.rfc-editor.org/info/rfc9110/#section-15.5.10"
+                }
             };
     }
 }

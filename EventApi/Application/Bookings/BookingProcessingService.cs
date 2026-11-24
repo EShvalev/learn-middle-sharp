@@ -11,8 +11,8 @@ namespace EventApi.Application.Bookings
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IKeyedLockManager _lockManager;
         private readonly ILogger<BookingProcessingService> _logger;
-        private readonly TimeSpan _timerPeriod = TimeSpan.FromSeconds(5);
-        private readonly int _processingDelay = 2000;
+        private readonly TimeSpan _pollingInterval = TimeSpan.FromSeconds(5);
+        private readonly TimeSpan _processingDelay = TimeSpan.FromSeconds(2);
         // 19.11.2026: по замечанию из ревью спринта 4 заменил _processingSemaphore на синглтон объект IKeyedLockManager
         //private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
@@ -31,7 +31,7 @@ namespace EventApi.Application.Bookings
         {
             _logger.LogInformation("BookingProcessingService запущен.");
 
-            using var timer = new PeriodicTimer(_timerPeriod);
+            using var timer = new PeriodicTimer(_pollingInterval);
 
             try
             {
@@ -67,78 +67,75 @@ namespace EventApi.Application.Bookings
             await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
             using var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var bookings = context.Bookings //.GetAllAsync(ct);
-                .AsNoTracking()
-                .AsEnumerable();
-            var pending = bookings
-                .Where(booking => booking.Status == BookingStatus.Pending).ToList<Booking>();
-            var tasks = pending
-                .Select(booking => ProcessBookingAsync(booking, ct))
+            var pendingIds = await context.Bookings
+                .Where(booking => booking.Status == BookingStatus.Pending)
+                .Select(booking => booking.Id)
+                .ToListAsync();
+
+            var tasks = pendingIds
+                .Select(bookingId => ProcessBookingAsync(bookingId, ct))
                 .ToList();
 
             await Task.WhenAll(tasks);
         }
 
-        private async Task ProcessBookingAsync(Booking booking, CancellationToken ct)
+        private async Task ProcessBookingAsync(Guid bookingId, CancellationToken ct)
         {
             // Имитируем задержку
             await Task.Delay(_processingDelay, ct);
 
-            // Семафор входит в асинхронное ожидание
-            //await _processingSemaphore.WaitAsync(ct);
-
             await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
             using var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            Event? evnt = null;
-            bool needReleaseSeats = false;
+            var booking = await context.Bookings.FindAsync(bookingId, ct);
+            if (booking == null)
+                return;
 
+            Event? evnt = await context.Events.FindAsync(booking.EventId, ct);
+
+            //await _processingSemaphore.WaitAsync(ct);
             using (await _lockManager.AcquireEventLockAsync(booking.EventId, ct))
             {
                 try
                 {
-                    evnt = await context.Events.FindAsync(booking.EventId, ct);
                     if (evnt == null)
                     {
                         booking.Reject();
-                        context.Bookings.Update(booking);
                         _logger.LogWarning("[{Timestamp}]: Событие {EventId} не найдено, бронирование {BookingId} отклонено.", DateTime.Now, booking.EventId, booking.Id);
                     }
                     else
                     {
                         booking.Confirm();
-                        context.Bookings.Update(booking);
                         _logger.LogInformation("[{Timestamp}]: Бронирование {BookingId} подтверждено.", DateTime.Now, booking.Id);
                     }
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
-                    _logger.LogInformation("Во время бронирования сработало прерывание операции.");
-                    throw; // Пробрасываем наверх, чтобы обработки выше корректно завершился
+                    _logger.LogInformation("При обработке бронирования {BookingId} сработало прерывание операции.", booking.Id);
                 }
                 catch (Exception ex)
                 {
-                    needReleaseSeats = true;
-
-                    if (booking.Status != BookingStatus.Rejected)
+                    try
                     {
-                        booking.Reject();
-                        context.Bookings.Update(booking);
-                        _logger.LogError(ex, "При обработке бронирования {BookingId} произошла ошибка, бронирование отклонено.", booking.Id);
+                        if (booking.Status != BookingStatus.Rejected)
+                        {
+                            booking.Reject();
+
+                            if (evnt != null)
+                                evnt.ReleaseSeats();
+
+                            _logger.LogError(ex, "При обработке бронирования {BookingId} произошла ошибка, бронирование отклонено.", booking.Id);
+                        }
+                    }
+                    catch (Exception relEx)
+                    {
+                        _logger.LogError(relEx, "При обработке бронирования {BookingId} произошла ошибка, попытка отклонить бронирование и вернуть места не удалась.", booking.Id);
                     }
                 }
                 finally
                 {
-                    if (needReleaseSeats && evnt != null)
-                    {
-                        evnt.ReleaseSeats();
-                        context.Events.Update(evnt);
-                    }
-
                     // Сохраняем все изменения
                     await context.SaveChangesAsync(ct);
-
-                    //_processingSemaphore.Release();
                 }
             }
         }

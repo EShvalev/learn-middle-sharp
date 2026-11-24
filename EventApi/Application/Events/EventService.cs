@@ -1,7 +1,8 @@
-﻿using EventApi.DataAсcess;
+﻿using EventApi.Application.Exceptions;
+using EventApi.DataAсcess;
 using EventApi.Models.Events;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 
 namespace EventApi.Application.Events
 {
@@ -24,46 +25,50 @@ namespace EventApi.Application.Events
 
         public async Task<PaginatedResult<EventDto>> GetEventsAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default)
         {
-            var filtered = _dbContext.Events
-                .AsNoTracking()
-                .AsQueryable();
-
             // Выбрасываем исключение, если pageSize <= 0
             if (pageSize <= 0)
-                throw new ValidationException(string.Format("Значение {0} должно быть больше 0.", nameof(pageSize)));
+                throw new ValidationException(nameof(pageSize), string.Format("Значение должно быть больше 0."));
 
             // Выбрасываем исключение, если page < 1
             if (page < 1)
-                throw new ValidationException(string.Format("Значение {0} должно быть больше 0.", nameof(page)));
+                throw new ValidationException(nameof(page), string.Format("Значение должно быть больше 0."));
+
+            var query = _dbContext.Events
+                .AsNoTracking()
+                .AsQueryable();
 
             // По замечанию из ревью 2 спринта, не применяем этот фильтр также если строка пустая
             if (!string.IsNullOrEmpty(title))
-                filtered = filtered.Where(e => e.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(e => e.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
 
             if (from.HasValue)
-                filtered = filtered.Where(e => e.StartAt.HasValue && e.StartAt.Value >= from.Value);
+                query = query.Where(e => e.StartAt >= from.Value);
 
             if (to.HasValue)
-                filtered = filtered.Where(e => e.EndAt.HasValue && e.EndAt.Value <= to.Value);
+                query = query.Where(e => e.StartAt <= to.Value); // bugfix: была ошибка, проверялось условие по e.EndAt - исправлено (+1 тест + README fixes)
 
-            var items = await filtered
+            var items = await query
                 .OrderBy(e => e.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(e => new EventDto(e))
-                .ToListAsync();
+                .ToListAsync(ct);
 
-            int totalItems = filtered.Count();
-            int curPageSize = items.Count();
+            var totalCount = await query.CountAsync(ct);
 
-            return new PaginatedResult<EventDto>(items, page, curPageSize, totalItems);
+            return new PaginatedResult<EventDto>
+            {
+                Items = items.Select(e => new EventDto(e)).ToArray(),
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
 
         public async Task<EventDto> GetEventByIdAsync(Guid id, CancellationToken ct = default)
         {
             var evnt = await _dbContext.Events.FindAsync(id, ct);
             if (evnt == null)
-                throw new EventNotFoundException($"Событие {id} не найдено.");
+                throw new NotFoundException($"Событие {id} не найдено.");
 
             return new EventDto(evnt);
         }
@@ -95,7 +100,7 @@ namespace EventApi.Application.Events
             {
                 evnt = await _dbContext.Events.FindAsync(id, ct);
                 if (evnt == null)
-                    throw new EventNotFoundException($"Событие {id} не найдено.");
+                    throw new NotFoundException($"Событие {id} не найдено.");
 
                 // Валидация инвариантов перенесена в саму модель.
                 evnt.Update(
@@ -107,7 +112,6 @@ namespace EventApi.Application.Events
                     withValidation: true
                 );
 
-                _dbContext.Events.Update(evnt);
                 await _dbContext.SaveChangesAsync(ct);
             }
 
@@ -119,7 +123,7 @@ namespace EventApi.Application.Events
         {
             Event? evnt = await _dbContext.Events.FindAsync(id, ct);
             if (evnt == null)
-                throw new EventNotFoundException($"Событие {id} не найдено.");
+                throw new NotFoundException($"Событие {id} не найдено.");
 
             _dbContext.Events.Remove(evnt);
             await _dbContext.SaveChangesAsync(ct);

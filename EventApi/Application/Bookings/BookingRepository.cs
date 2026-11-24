@@ -1,6 +1,6 @@
 ﻿using EventApi.DataAсcess;
 using EventApi.Models.Bookings;
-using EventApi.Models.Events;
+using EventApi.Application.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 
@@ -41,7 +41,7 @@ namespace EventApi.Application.Bookings
             ArgumentNullException.ThrowIfNull(booking);
 
             if (await _dbContext.Bookings.FindAsync(id, ct) == null)
-                throw new BookingNotFoundException($"Бронирование {id} не найдено.");
+                throw new NotFoundException($"Бронирование {id} не найдено.");
 
             _dbContext.Bookings.Update(booking);
         }
@@ -50,7 +50,7 @@ namespace EventApi.Application.Bookings
         {
             Booking? booking = await _dbContext.Bookings.FindAsync(id, ct);
             if (booking == null)
-                throw new BookingNotFoundException($"Бронирование {id} не найдено.");
+                throw new NotFoundException($"Бронирование {id} не найдено.");
 
             _dbContext.Bookings.Remove(booking);
         }

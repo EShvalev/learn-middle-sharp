@@ -98,7 +98,7 @@ namespace EventApi.Tests
             var result = await _eventService.GetEventsAsync(null, startSince, endTill, 1, pageSize, CancellationToken.None);
 
             // Assert
-            Assert.Equal(expectedCount, result.TotalItems);
+            Assert.Equal(expectedCount, result.TotalCount);
         }
 
         // Параметры фильтрации и пагинации (title, from, to, page, pageSize) + ожидаемое количество событий в выборке (expectedCount)
@@ -109,7 +109,7 @@ namespace EventApi.Tests
             data.Add("джаз", null, null, 1, 5, 5);
             data.Add("джаз", null, null, 2, 5, 1);
             data.Add("джаз", Convert.ToDateTime("2026-10-12T19:00:00+03"), null, 1, 100, 4);
-            data.Add("джаз", null, Convert.ToDateTime("2026-10-12T19:00:00+03"), 1, 100, 2);
+            data.Add("джаз", null, Convert.ToDateTime("2026-10-12T19:00:00+03"), 1, 100, 3);
             data.Add(null, null, null, 1, 1, 1);
 
             return data;
@@ -149,7 +149,7 @@ namespace EventApi.Tests
             var result = await _eventService.GetEventsAsync(null, null, null, lastPage, pageSize, CancellationToken.None);
 
             // Assert
-            Assert.Equal(expectedCount, result.CurrentPageSize);
+            Assert.Equal(expectedCount, result.Items.Count());
         }
     }
 }

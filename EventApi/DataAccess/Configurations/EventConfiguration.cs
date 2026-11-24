@@ -17,6 +17,9 @@ namespace EventApi.DataAccess.Configurations
                 .HasMaxLength(200)
                 .IsRequired();
 
+            builder.Property(e => e.Description)
+                .HasMaxLength(2000);
+
             builder.Property(e => e.StartAt)
                 .IsRequired();
 
@@ -26,12 +29,16 @@ namespace EventApi.DataAccess.Configurations
             builder.Property(e => e.TotalSeats)
                 .IsRequired();
 
+            builder.Property(e => e.AvailableSeats)
+                .IsRequired();
+
             //builder.HasIndex(e => e.Title)
             //    .IsUnique();
 
             builder.HasMany(e => e.Bookings)
                 .WithOne(b => b.Event)
-                .HasForeignKey(b => b.EventId);
+                .HasForeignKey(b => b.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

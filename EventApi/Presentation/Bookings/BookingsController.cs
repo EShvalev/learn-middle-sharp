@@ -25,6 +25,8 @@ namespace EventApi.Presentation.Bookings
 
         // GET api/<BookingsController>
         [HttpGet()]
+        [ProducesResponseType(typeof(List<BookingDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
             var bookings = await _bookingService.GetBookingsAsync(ct);
@@ -35,6 +37,7 @@ namespace EventApi.Presentation.Bookings
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(BookingDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetByIdAsync(Guid id, CancellationToken ct)
         {
             var booking = await _bookingService.GetBookingByIdAsync(id, ct);
@@ -47,6 +50,7 @@ namespace EventApi.Presentation.Bookings
         [ProducesResponseType(typeof(BookingCreateResponse), StatusCodes.Status202Accepted)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateAsync([FromRoute] Guid id, CancellationToken ct)
         {
             var booking = await _bookingService.CreateBookingAsync(id, ct);

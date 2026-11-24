@@ -13,17 +13,22 @@ namespace EventApi.DataAccess.Configurations
             builder.Property(b => b.Id)
                 .ValueGeneratedNever();
 
+            builder.Property(b => b.EventId)
+                .IsRequired();
+
             builder.Property(b => b.Status)
-                  .HasConversion<string>()
-                  .HasMaxLength(20)
-                  .IsRequired();
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .IsRequired();
 
             builder.Property(b => b.CreatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
 
             builder.HasOne(b => b.Event)
                 .WithMany(e => e.Bookings)
-                .HasForeignKey(b => b.EventId);
+                .HasForeignKey(b => b.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

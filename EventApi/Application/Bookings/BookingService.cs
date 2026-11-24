@@ -1,6 +1,6 @@
 ﻿using EventApi.DataAсcess;
 using EventApi.Models.Bookings;
-using EventApi.Models.Events;
+using EventApi.Application.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventApi.Application.Bookings
@@ -35,16 +35,12 @@ namespace EventApi.Application.Bookings
             {
                 var evnt = await _dbContext.Events.FindAsync(eventId, ct);
                 if (evnt == null)
-                    throw new EventNotFoundException($"Событие {eventId} не найдено. Бронирование по нему не создано.");
+                    throw new NotFoundException($"Событие {eventId} не найдено. Бронирование по нему не создано.");
 
                 if (!evnt.TryReserveSeats())
                     throw new NoAvailableSeatsException("Недостаточно свободных мест для этого бронирования");
 
-                // После перехода на EF вызов Update нужен, т.к. все изменения теперь производятся не напрямую в объектах хранилища, а через клоны.
-                _dbContext.Events.Update(evnt);
-
                 booking = Booking.Create(eventId);
-
                 await _dbContext.Bookings.AddAsync(booking, ct);
                 await _dbContext.SaveChangesAsync(ct);
             }
@@ -57,11 +53,9 @@ namespace EventApi.Application.Bookings
         {
             var booking = await _dbContext.Bookings.FindAsync(id, ct);
             if (booking == null)
-                throw new EventNotFoundException($"Бронирование {id} не найдено.");
+                throw new NotFoundException($"Бронирование {id} не найдено.");
 
             booking.Confirm();
-
-            _dbContext.Bookings.Update(booking);
             await _dbContext.SaveChangesAsync(ct);
 
             return new BookingDto(booking);
@@ -71,7 +65,7 @@ namespace EventApi.Application.Bookings
         {
             var booking = await _dbContext.Bookings.FindAsync(id, ct);
             if (booking == null)
-                throw new EventNotFoundException($"Бронирование {id} не найдено.");
+                throw new NotFoundException($"Бронирование {id} не найдено.");
 
             //lock (_bookingLock)
             using (await _lockManager.AcquireEventLockAsync(booking.EventId, ct))
@@ -81,12 +75,9 @@ namespace EventApi.Application.Bookings
 
                 var evnt = await _dbContext.Events.FindAsync(booking.EventId, ct);
                 if (evnt == null)
-                    throw new EventNotFoundException($"Событие {booking.EventId} не найдено. Отмены бронирования по нему не произошло.");
+                    throw new NotFoundException($"Событие {booking.EventId} не найдено. Отмены бронирования по нему не произошло.");
 
                 evnt.ReleaseSeats();
-
-                // После перехода на EF вызов Update нужен, т.к. все изменения теперь производятся не напрямую в объектах хранилища, а через клоны.
-                _dbContext.Events.Update(evnt);
                 await _dbContext.SaveChangesAsync(ct);
             }
 
@@ -97,7 +88,7 @@ namespace EventApi.Application.Bookings
         {
             var booking = await _dbContext.Bookings.FindAsync(id, ct);
             if (booking == null)
-                throw new BookingNotFoundException(string.Format("Бронирование {0} не найдено.", id));
+                throw new NotFoundException(string.Format("Бронирование {0} не найдено.", id));
 
             return new BookingDto(booking);
         }
