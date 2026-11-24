@@ -93,8 +93,9 @@ namespace EventApi.Application.Bookings
 
             Event? evnt = await context.Events.FindAsync(booking.EventId, ct);
 
+            // Блокировка здесь больше не нужна, т.к. каждая задача теперь работает со своим экземпляром DbContext
             //await _processingSemaphore.WaitAsync(ct);
-            using (await _lockManager.AcquireEventLockAsync(booking.EventId, ct))
+            //using (await _lockManager.AcquireEventLockAsync(booking.EventId, ct))
             {
                 try
                 {
