@@ -222,17 +222,14 @@ namespace EventApi.Tests
             int expectedSeats = 0;
 
             int count = 20; // 5 должно создаться успешно + 15 NoAvailableSeatsException
-            List<Task> allTasks = new List<Task>();
-
-            for (int i = 0; i < count; i++)
-            {
-                allTasks.Add(Task.Run(async () =>
+            var allTasks = Enumerable.Range(0, count)
+                .Select(_ => Task.Run(async () =>
                 {
                     using var scope = _serviceProvider.CreateScope();
                     var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
                     await bookingService.CreateBookingAsync(evnt.Id, CancellationToken.None);
-                }));
-            }
+                }))
+                .ToList();
 
             // Act
             var exception = await Assert.ThrowsAsync<NoAvailableSeatsException>(async () =>
@@ -240,7 +237,7 @@ namespace EventApi.Tests
                 await Task.WhenAll(allTasks);
             });
             // После манипуляций с бронированием событие нужно перезапрашивать из хранилища, т.к. в Task.Run создавались локальные БД контексты.
-            await _dbContext.Entry(evnt).ReloadAsync(CancellationToken.None); //_eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            await _dbContext.Entry(evnt).ReloadAsync(CancellationToken.None);
 
             // Assert
             Assert.Equal(5, allTasks.Where(t => t.IsCompletedSuccessfully).Count());
@@ -256,13 +253,10 @@ namespace EventApi.Tests
             var evnt = await CreateTestEvent(totalSeats: count);
             int expectedSeats = 0;
 
-            List<Task> allTasks = new List<Task>();
-            ConcurrentBag<Guid> ids = new ConcurrentBag<Guid>();
-
             // Act
-            for (int i = 0; i < count; i++)
-            {
-                allTasks.Add(Task.Run(async () =>
+            var ids = new ConcurrentBag<Guid>();
+            var allTasks = Enumerable.Range(0, count)
+                .Select(_ => Task.Run(async () =>
                 {
                     using var scope = _serviceProvider.CreateScope();
                     var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
@@ -270,11 +264,10 @@ namespace EventApi.Tests
                     ids.Add(booking.Result.Id);
                 }
                 ));
-            }
 
             await Task.WhenAll(allTasks);
             // После манипуляций с бронированием событие нужно перезапрашивать из хранилища, т.к. в Task.Run создавались локальные БД контексты.
-            await _dbContext.Entry(evnt).ReloadAsync(CancellationToken.None); //_eventStore.GetByIdAsync(evnt.Id, CancellationToken.None);
+            await _dbContext.Entry(evnt).ReloadAsync(CancellationToken.None);
 
             // Assert
             Assert.Equal(count, ids.Distinct().Count());
